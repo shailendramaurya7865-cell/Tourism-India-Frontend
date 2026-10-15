@@ -8,6 +8,6 @@ export interface TouristPlace {
   slug?: string;
   cityName?: string;
   stateName?: string;
-  averageRating?: number;
+  avgRating?: number;
   reviewCount?: number;
 }

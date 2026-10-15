@@ -29,7 +29,7 @@ export class HomeService {
       ),
 
       categories: this.http.get<ApiResponse<Category[]>>(
-        `${this.apiUrl}/categories`
+        `${this.apiUrl}/categories/popular`
       ).pipe(
         tap(response => {
           console.log('Categories API Response:', response);

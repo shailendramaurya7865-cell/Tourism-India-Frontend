@@ -146,8 +146,8 @@
                 <span aria-hidden="true">✧</span>
               </div>
 
-              <span class="rating" *ngIf="place.averageRating != null">
-                ★ {{ place.averageRating | number:'1.1-1' }}
+              <span class="rating" *ngIf="place.avgRating != null">
+                ★ {{ place.avgRating | number:'1.1-1' }}
 
                 <ng-container *ngIf="place != null">
                   ({{ place.reviewCount }})
@@ -189,7 +189,7 @@
 
       </div>
     </section>
-
+    
     <!-- Handpicked Destinations -->
     <!-- Uses the same API data instead of a separate hardcoded array -->
     <section class="section content-container featured-section" *ngIf="featuredDestinations.length > 0">

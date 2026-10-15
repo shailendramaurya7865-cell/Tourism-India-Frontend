@@ -1,286 +1,240 @@
 <!-- Loading State -->
 <div class="status-container" *ngIf="loading">
-  <div class="loader"></div>
-  <p>Exploring this beautiful state...</p>
+    <div class="loader"></div>
+    <p>Exploring this beautiful state...</p>
 </div>
 
 <!-- Error State -->
-<div class="status-container error-state"
-     *ngIf="!loading && errorMessage">
+<div class="status-container error-state" *ngIf="!loading && errorMessage">
 
-  <div class="status-icon">⚠️</div>
+    <div class="status-icon">⚠️</div>
 
-  <h2>Something went wrong</h2>
-  <p>{{ errorMessage }}</p>
+    <h2>Something went wrong</h2>
+    <p>{{ errorMessage }}</p>
 
-  <button class="retry-button" (click)="retry()">
-    Try Again
-  </button>
+    <button class="retry-button" (click)="retry()">
+        Try Again
+    </button>
 </div>
 
 <!-- State Detail Content -->
 <ng-container *ngIf="!loading && hasStateData && state">
 
-  <!-- Hero Section -->
-  <section class="state-hero">
+    <!-- Hero Section -->
+    <section class="state-hero">
 
-    <img
-      class="hero-image"
-      [src]="state.imageUrl"
-      [alt]="state.name"
-    />
+        <img class="hero-image" [src]="state.imageUrl" [alt]="state.name" />
 
-    <div class="hero-overlay"></div>
+        <div class="hero-overlay"></div>
 
-    <div class="hero-content">
+        <div class="hero-content">
 
-      <div class="breadcrumb">
-        <a routerLink="/">Home</a>
-        <span>/</span>
-        <a routerLink="/states">States</a>
-        <span>/</span>
-        <span>{{ state.name }}</span>
-      </div>
+            <div class="breadcrumb">
+                <a routerLink="/">Home</a>
+                <span>/</span>
+                <a routerLink="/states">States</a>
+                <span>/</span>
+                <span>{{ state.name }}</span>
+            </div>
 
-      <span class="hero-label">EXPLORE INDIA</span>
+            <span class="hero-label">EXPLORE INDIA</span>
 
-      <h1>{{ state.name }}</h1>
+            <h1>{{ state.name }}</h1>
 
-      <p class="hero-tagline">{{ state.tagLine }}</p>
+            <p class="hero-tagline">{{ state.tagLine }}</p>
 
-      <a href="#about-state" class="explore-button">
-        Discover the State
-        <span>↓</span>
-      </a>
+            <a href="#about-state" class="explore-button">
+                Discover the State
+                <span>↓</span>
+            </a>
 
-    </div>
-  </section>
+        </div>
+    </section>
 
-  <!-- About State -->
-  <section class="section about-section" id="about-state">
+    <!-- About State -->
+    <section class="section about-section" id="about-state">
 
-    <div class="section-heading">
-      <span class="eyebrow">GET TO KNOW</span>
-      <h2>Discover {{ state.name }}</h2>
-      <p class="section-subtitle">
-        Explore the culture, heritage and experiences that make
-        this state special.
-      </p>
-    </div>
+        <div class="section-heading">
+            <span class="eyebrow">GET TO KNOW</span>
+            <h2>Discover {{ state.name }}</h2>
+            <p class="section-subtitle">
+                Explore the culture, heritage and experiences that make
+                this state special.
+            </p>
+        </div>
 
-    <div class="about-content">
-      <div class="about-decoration">✦</div>
+        <div class="about-content">
+            <div class="about-decoration">✦</div>
 
-      <p class="state-description">
-        {{ state.description }}
-      </p>
-    </div>
+            <p class="state-description">
+                {{ state.description }}
+            </p>
+        </div>
 
-  </section>
+    </section>
 
-  <!-- Popular Cities -->
-  <section class="section cities-section"
-           *ngIf="popularCities.length > 0">
+    <!-- Popular Cities -->
+    <section class="section cities-section" *ngIf="popularCities.length > 0">
 
-    <div class="section-header-row">
+        <div class="section-header-row">
 
-      <div class="section-heading">
-        <span class="eyebrow">PLACES TO EXPLORE</span>
+            <div class="section-heading">
+                <span class="eyebrow">PLACES TO EXPLORE</span>
+                <h2>Popular Cities</h2>
+                <p class="section-subtitle">
+                    Discover the remarkable cities of {{ state.name }}.
+                </p>
+            </div>
+
+            <a class="view-all-link" [routerLink]="['/cities']" [queryParams]="{ stateId: state.id }">
+                View All <span>→</span>
+            </a>
+
+        </div>
+
+        <div class="city-grid">
+
+            <a class="city-card" *ngFor="let city of popularCities" [routerLink]="['/cities', city.slug]">
+
+                <div class="city-image-wrapper">
+
+                    <img class="city-image" [src]="city.imageUrl" [alt]="city.name" loading="lazy" />
+
+                    <div class="city-image-overlay"></div>
+
+                    <span class="city-explore-icon">↗</span>
+
+                    <div class="city-card-content">
+                        <span class="city-location">
+                            {{ state.name }}
+                        </span>
+
+                        <h3>{{ city.name }}</h3>
+                    </div>
+
+                </div>
+
+                <div class="city-description">
+                    <p>{{ city.cityDescription }}</p>
+                    <span class="card-arrow">Explore city →</span>
+                </div>
+
+            </a>
+
+        </div>
+
+    </section>
+
+    <!-- Empty Cities State -->
+    <section class="section empty-section" *ngIf="popularCities.length === 0">
+
         <h2>Popular Cities</h2>
-        <p class="section-subtitle">
-          Discover the remarkable cities of {{ state.name }}.
-        </p>
-      </div>
+        <p>City information will be available soon.</p>
 
-      <a
-        class="view-all-link"
-        [routerLink]="['/cities']"
-        [queryParams]="{ stateId: state.id }"
-      >
-        View All <span>→</span>
-      </a>
+    </section>
 
-    </div>
+    <!-- Top Tourist Places -->
+    <section class="section places-section" *ngIf="topTouristPlaces.length > 0">
 
-    <div class="city-grid">
+        <div class="section-header-row">
 
-      <a
-        class="city-card"
-        *ngFor="let city of popularCities"
-        [routerLink]="['/cities', city.slug]"
-      >
+            <div class="section-heading">
+                <span class="eyebrow">MUST-VISIT DESTINATIONS</span>
+                <h2>Top Tourist Places</h2>
+                <p class="section-subtitle">
+                    Discover the attractions you shouldn't miss in
+                    {{ state.name }}.
+                </p>
+            </div>
 
-        <div class="city-image-wrapper">
-
-          <img
-            class="city-image"
-            [src]="city.imageUrl"
-            [alt]="city.name"
-            loading="lazy"
-          />
-
-          <div class="city-image-overlay"></div>
-
-          <span class="city-explore-icon">↗</span>
-
-          <div class="city-card-content">
-            <span class="city-location">
-              {{ state.name }}
-            </span>
-
-            <h3>{{ city.name }}</h3>
-          </div>
+            <a class="view-all-link" [routerLink]="['/tourist-places']" [queryParams]="{ stateId: state.id }">
+                View All <span>→</span>
+            </a>
 
         </div>
 
-        <div class="city-description">
-          <p>{{ city.cityDescription }}</p>
-          <span class="card-arrow">Explore city →</span>
+        <div class="place-grid">
+
+            <article class="place-card" *ngFor="let place of topTouristPlaces">
+
+                <div class="place-image-wrapper">
+
+                    <img *ngIf="place.imageUrl" [src]="place.imageUrl" [alt]="place.title" loading="lazy" />
+
+                    <div *ngIf="!place.imageUrl" class="place-image-placeholder">
+                        <span>🏛️</span>
+                        <small>Discover this destination</small>
+                    </div>
+
+                    <span class="place-city-badge">
+                        {{ place.cityName }}
+                    </span>
+
+                </div>
+
+                <div class="place-card-body">
+
+                    <div class="place-rating" *ngIf="place.avgRating">
+
+                        <span class="star">★</span>
+
+                        <strong>
+                            {{ place.avgRating | number:'1.1-1' }}
+                        </strong>
+
+                        <span class="review-count">
+                            ({{ formatReviewCount(place.reviewCount ?? 0) }} reviews)
+                        </span>
+
+                    </div>
+
+                    <h3>{{ place.title }}</h3>
+
+                    <p class="place-location">
+                        <span>📍</span>
+                        {{ place.cityName }}, {{ place.stateName }}
+                    </p>
+
+                    <a class="place-explore-link" [routerLink]="['/tourist-places', place.slug]">
+                        Explore destination <span>→</span>
+                    </a>
+
+                </div>
+
+            </article>
+
         </div>
 
-      </a>
+    </section>
 
-    </div>
+    <!-- Empty Tourist Places State -->
+    <section class="section empty-section" *ngIf="topTouristPlaces.length === 0">
 
-  </section>
-
-  <!-- Empty Cities State -->
-  <section class="section empty-section"
-           *ngIf="popularCities.length === 0">
-
-    <h2>Popular Cities</h2>
-    <p>City information will be available soon.</p>
-
-  </section>
-
-  <!-- Top Tourist Places -->
-  <section class="section places-section"
-           *ngIf="topTouristPlaces.length > 0">
-
-    <div class="section-header-row">
-
-      <div class="section-heading">
-        <span class="eyebrow">MUST-VISIT DESTINATIONS</span>
         <h2>Top Tourist Places</h2>
-        <p class="section-subtitle">
-          Discover the attractions you shouldn't miss in
-          {{ state.name }}.
-        </p>
-      </div>
+        <p>Tourist attractions will be available soon.</p>
 
-      <a
-        class="view-all-link"
-        [routerLink]="['/tourist-places']"
-        [queryParams]="{ stateId: state.id }"
-      >
-        View All <span>→</span>
-      </a>
+    </section>
 
-    </div>
+    <!-- Bottom CTA -->
+    <section class="state-cta">
 
-    <div class="place-grid">
+        <div class="cta-content">
+            <span class="eyebrow">YOUR NEXT ADVENTURE</span>
 
-      <article
-        class="place-card"
-        *ngFor="let place of topTouristPlaces"
-      >
+            <h2>Ready to explore {{ state.name }}?</h2>
 
-        <div class="place-image-wrapper">
+            <p>
+                Start discovering its cities, landmarks and unforgettable
+                experiences.
+            </p>
 
-          <img
-            *ngIf="place.imageUrl"
-            [src]="place.imageUrl"
-            [alt]="place.title"
-            loading="lazy"
-          />
-
-          <div
-            *ngIf="!place.imageUrl"
-            class="place-image-placeholder"
-          >
-            <span>🏛️</span>
-            <small>Discover this destination</small>
-          </div>
-
-          <span class="place-city-badge">
-            {{ place.cityName }}
-          </span>
-
+            <a [routerLink]="['/cities']" [queryParams]="{ stateId: state.id }" class="cta-button">
+                Explore Cities <span>→</span>
+            </a>
         </div>
 
-        <div class="place-card-body">
+        <div class="cta-decoration">✦</div>
 
-          <div class="place-rating"
-               *ngIf="place.avgRating > 0">
-
-            <span class="star">★</span>
-
-            <strong>
-              {{ place.avgRating | number:'1.1-1' }}
-            </strong>
-
-            <span class="review-count">
-              ({{ formatReviewCount(place.reviewCount) }}
-              reviews)
-            </span>
-
-          </div>
-
-          <h3>{{ place.title }}</h3>
-
-          <p class="place-location">
-            <span>📍</span>
-            {{ place.cityName }}, {{ place.stateName }}
-          </p>
-
-          <a
-            class="place-explore-link"
-            [routerLink]="['/tourist-places', place.slug]"
-          >
-            Explore destination <span>→</span>
-          </a>
-
-        </div>
-
-      </article>
-
-    </div>
-
-  </section>
-
-  <!-- Empty Tourist Places State -->
-  <section class="section empty-section"
-           *ngIf="topTouristPlaces.length === 0">
-
-    <h2>Top Tourist Places</h2>
-    <p>Tourist attractions will be available soon.</p>
-
-  </section>
-
-  <!-- Bottom CTA -->
-  <section class="state-cta">
-
-    <div class="cta-content">
-      <span class="eyebrow">YOUR NEXT ADVENTURE</span>
-
-      <h2>Ready to explore {{ state.name }}?</h2>
-
-      <p>
-        Start discovering its cities, landmarks and unforgettable
-        experiences.
-      </p>
-
-      <a
-        [routerLink]="['/cities']"
-        [queryParams]="{ stateId: state.id }"
-        class="cta-button"
-      >
-        Explore Cities <span>→</span>
-      </a>
-    </div>
-
-    <div class="cta-decoration">✦</div>
-
-  </section>
+    </section>
 
 </ng-container>

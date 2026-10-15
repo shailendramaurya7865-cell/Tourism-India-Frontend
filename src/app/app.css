@@ -1,0 +1,28 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Keep images and content within the viewport */
+:host,
+.app-main {
+  box-sizing: border-box;
+}
+
+/* Improve anchor navigation */
+:host ::ng-deep section[id] {
+  scroll-margin-top: 90px;
+}
+
+@media (max-width: 600px) {
+  .app-main {
+    overflow-wrap: anywhere;
+  }
+}

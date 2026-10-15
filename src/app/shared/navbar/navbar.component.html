@@ -1,0 +1,36 @@
+<header class="navbar">
+  <div class="container navbar-inner">
+    <a class="brand" routerLink="/" (click)="closeMobileMenu()" aria-label="Tourism India home">
+      <span class="brand-mark">🪷</span>
+      <span class="brand-name">Tourism India</span>
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      (click)="toggleMobileMenu()"
+      [attr.aria-expanded]="mobileMenuOpen"
+      aria-label="Toggle navigation menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav-links" [class.open]="mobileMenuOpen" aria-label="Main navigation">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+         (click)="closeMobileMenu()">Home</a>
+
+      <a routerLink="/states" routerLinkActive="active"
+         (click)="closeMobileMenu()">States</a>
+
+      <a routerLink="/cities" routerLinkActive="active"
+         (click)="closeMobileMenu()">Cities</a>
+
+      <a routerLink="/tourist-places" routerLinkActive="active"
+         (click)="closeMobileMenu()">Tourist Places</a>
+
+      <a class="nav-cta" routerLink="/tourist-places"
+         (click)="closeMobileMenu()">Explore India <span>↗</span></a>
+    </nav>
+  </div>
+</header>

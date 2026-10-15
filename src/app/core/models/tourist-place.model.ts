@@ -4,8 +4,9 @@ import { State } from './state.model';
 
 export interface TouristPlace {
   id: number;
-  name: string;
+  title: string;
   slug?: string;
+  imageUrl?: string;
   cityName?: string;
   stateName?: string;
   avgRating?: number;

@@ -10,10 +10,16 @@ export const routes: Routes = [
       )
   },
   {
-  path: 'states',
+    path: 'states',
+    loadComponent: () =>
+      import('./features/states/states-list.component')
+        .then(m => m.StatesListComponent)
+  },
+ {
+  path: 'states/:id',
   loadComponent: () =>
-    import('./features/states/states-list.component')
-      .then(m => m.StatesListComponent)
+    import('./features/state-detail/state-detail.component')
+      .then(m => m.StateDetailComponent)
 },
   {
     path: '**',

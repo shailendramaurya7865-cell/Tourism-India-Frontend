@@ -1,164 +1,127 @@
-
 <main class="states-page">
 
-  <!-- Hero Section -->
-  <section class="states-hero">
-    <div class="states-hero-content">
+    <!-- Hero Section -->
+    <section class="states-hero">
+        <div class="states-hero-content">
 
-      <span class="eyebrow">DISCOVER INCREDIBLE INDIA</span>
+            <span class="eyebrow">DISCOVER INCREDIBLE INDIA</span>
 
-      <h1>Explore the States of India</h1>
+            <h1>Explore the States of India</h1>
 
-      <p>
-        From breathtaking mountains to royal palaces and peaceful
-        coastlines, discover the unique beauty and culture of every state.
-      </p>
+            <p>
+                From breathtaking mountains to royal palaces and peaceful
+                coastlines, discover the unique beauty and culture of every state.
+            </p>
 
-      <!-- State Count -->
-      <div
-        class="state-count"
-        *ngIf="!loading && !errorMessage && states.length > 0"
-      >
-        <span class="count-number">{{ states.length }}</span>
-        <span>
-          {{ states.length === 1 ? 'State' : 'States' }} to explore
-        </span>
-      </div>
+            <!-- State Count -->
+            <div class="state-count" *ngIf="!loading && !errorMessage && states.length > 0">
+                <span class="count-number">{{ states.length }}</span>
+                <span>
+                    {{ states.length === 1 ? 'State' : 'States' }} to explore
+                </span>
+            </div>
 
-    </div>
-  </section>
+        </div>
+    </section>
 
 
-  <!-- States Listing Section -->
-  <section class="states-section">
+    <!-- States Listing Section -->
+    <section class="states-section">
 
-    <!-- Section Heading -->
-    <div class="section-heading">
-      <div>
-        <span class="eyebrow">FIND YOUR NEXT DESTINATION</span>
+        <!-- Section Heading -->
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">FIND YOUR NEXT DESTINATION</span>
 
-        <h2>Explore All States</h2>
+                <h2>Explore All States</h2>
 
-        <p>
-          Choose a state to discover its cities, culture and tourist
-          attractions.
-        </p>
-      </div>
-    </div>
-
-
-    <!-- Loading State -->
-    <div
-      class="status-container"
-      *ngIf="loading"
-      aria-live="polite"
-    >
-      <div class="loader"></div>
-
-      <p>Discovering the states of India...</p>
-    </div>
-
-
-    <!-- Error State -->
-    <div
-      class="status-container error-state"
-      *ngIf="!loading && errorMessage"
-      aria-live="polite"
-    >
-      <h3>We couldn't load the states</h3>
-
-      <p>{{ errorMessage }}</p>
-
-      <button
-        type="button"
-        class="retry-button"
-        (click)="retry()"
-      >
-        Try Again
-      </button>
-    </div>
-
-
-    <!-- Empty State -->
-    <div
-      class="status-container empty-state"
-      *ngIf="!loading && !errorMessage && states.length === 0"
-    >
-      <h3>No states available</h3>
-
-      <p>
-        There are currently no states to display. Please check again later.
-      </p>
-    </div>
-
-
-    <!-- State Cards -->
-    <div
-      class="states-grid"
-      *ngIf="!loading && !errorMessage && states.length > 0"
-    >
-
-      <article
-        class="state-card"
-        *ngFor="let state of states"
-        [attr.data-state-id]="state.id"
-      >
-
-        <!-- State Image -->
-        <div class="state-card-image">
-
-          <img
-            *ngIf="state.imageUrl"
-            [src]="state.imageUrl"
-            [alt]="state.name"
-            loading="lazy"
-          />
-
-          <!-- Fallback when no image is available -->
-          <div
-            class="state-image-placeholder"
-            *ngIf="!state.imageUrl"
-          >
-            <span>{{ getStateInitials(state.name) }}</span>
-          </div>
-
-          <!-- State Code -->
-          <span
-            class="state-code"
-            *ngIf="state.code"
-          >
-            {{ state.code }}
-          </span>
-
+                <p>
+                    Choose a state to discover its cities, culture and tourist
+                    attractions.
+                </p>
+            </div>
         </div>
 
 
-        <!-- State Information -->
-        <div class="state-card-content">
+        <!-- Loading State -->
+        <div class="status-container" *ngIf="loading" aria-live="polite">
+            <div class="loader"></div>
 
-          <h3>{{ state.name }}</h3>
+            <p>Discovering the states of India...</p>
+        </div>
 
-          <p>{{ getStateDescription(state) }}</p>
 
-          <!-- Card Footer -->
-          <div class="state-card-footer">
+        <!-- Error State -->
+        <div class="status-container error-state" *ngIf="!loading && errorMessage" aria-live="polite">
+            <h3>We couldn't load the states</h3>
 
-            <span class="discover-label">
-              Discover the state
-            </span>
+            <p>{{ errorMessage }}</p>
 
-            <span class="state-arrow" aria-hidden="true">
-              ↗
-            </span>
+            <button type="button" class="retry-button" (click)="retry()">
+                Try Again
+            </button>
+        </div>
 
-          </div>
+
+        <!-- Empty State -->
+        <div class="status-container empty-state" *ngIf="!loading && !errorMessage && states.length === 0">
+            <h3>No states available</h3>
+
+            <p>
+                There are currently no states to display. Please check again later.
+            </p>
+        </div>
+
+
+        <!-- State Cards -->
+        <div class="states-grid" *ngIf="!loading && !errorMessage && states.length > 0">
+            <article class="state-card" *ngFor="let state of states" [attr.data-state-id]="state.id"
+                [routerLink]="['/states', state.id]" role="link" tabindex="0">
+
+                <!-- State Image -->
+                <div class="state-card-image">
+
+                    <img *ngIf="state.imageUrl" [src]="state.imageUrl" [alt]="state.name" loading="lazy" />
+
+                    <!-- Fallback when no image is available -->
+                    <div class="state-image-placeholder" *ngIf="!state.imageUrl">
+                        <span>{{ getStateInitials(state.name) }}</span>
+                    </div>
+
+                    <!-- State Code -->
+                    <span class="state-code" *ngIf="state.code">
+                        {{ state.code }}
+                    </span>
+
+                </div>
+
+
+                <!-- State Information -->
+                <div class="state-card-content">
+
+                    <h3>{{ state.name }}</h3>
+
+                    <p>{{ getStateDescription(state) }}</p>
+
+                    <!-- Card Footer -->
+                    <div class="state-card-footer">
+
+                        <span class="discover-label">
+                            Discover the state
+                        </span>
+
+                        <span class="state-arrow" aria-hidden="true">
+                            ↗
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
 
         </div>
 
-      </article>
-
-    </div>
-
-  </section>
+    </section>
 
 </main>

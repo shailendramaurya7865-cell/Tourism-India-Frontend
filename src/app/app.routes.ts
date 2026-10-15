@@ -10,6 +10,12 @@ export const routes: Routes = [
       )
   },
   {
+  path: 'states',
+  loadComponent: () =>
+    import('./features/states/states-list.component')
+      .then(m => m.StatesListComponent)
+},
+  {
     path: '**',
     redirectTo: ''
   }

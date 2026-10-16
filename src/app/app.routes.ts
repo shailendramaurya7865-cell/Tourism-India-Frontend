@@ -15,12 +15,18 @@ export const routes: Routes = [
       import('./features/states/states-list.component')
         .then(m => m.StatesListComponent)
   },
- {
-  path: 'states/:id',
-  loadComponent: () =>
-    import('./features/state-detail/state-detail.component')
-      .then(m => m.StateDetailComponent)
-},
+  {
+    path: 'states/:id',
+    loadComponent: () =>
+      import('./features/state-detail/state-detail.component')
+        .then(m => m.StateDetailComponent)
+  },
+  {
+    path: 'cities',
+    loadComponent: () =>
+      import('./features/cities/city-list.component')
+        .then(m => m.CitiesListComponent)
+  },
   {
     path: '**',
     redirectTo: ''

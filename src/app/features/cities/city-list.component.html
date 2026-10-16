@@ -1,0 +1,129 @@
+<main class="cities-page">
+
+    <!-- Hero Section -->
+    <section class="cities-hero">
+        <div class="cities-hero-content">
+            <span class="eyebrow">DISCOVER INCREDIBLE INDIA</span>
+            <h1>Explore the Cities of India</h1>
+
+            <p>
+                From historic royal capitals to vibrant cultural hubs and peaceful
+                coastal towns, discover the places that make India extraordinary.
+            </p>
+
+            <!-- City Count -->
+            <div class="city-count" *ngIf="!loading && !errorMessage && cities.length > 0">
+                <span class="count-number">{{ cities.length }}</span>
+                <span>
+                    {{ cities.length === 1 ? 'City' : 'Cities' }} to explore
+                </span>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- Cities Listing Section -->
+    <section class="cities-section">
+
+        <!-- Section Heading -->
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">FIND YOUR NEXT DESTINATION</span>
+
+                <h2>Explore All Cities</h2>
+
+                <p>
+                    Discover remarkable destinations, local culture, and
+                    unforgettable tourist attractions across India.
+                </p>
+            </div>
+        </div>
+
+
+        <!-- Loading State -->
+        <div class="status-container" *ngIf="loading" aria-live="polite">
+            <div class="loader"></div>
+            <p>Discovering the cities of India...</p>
+        </div>
+
+
+        <!-- Error State -->
+        <div class="status-container error-state" *ngIf="!loading && errorMessage" aria-live="polite">
+            <h3>We couldn't load the cities</h3>
+
+            <p>{{ errorMessage }}</p>
+
+            <button type="button" class="retry-button" (click)="retry()">
+                Try Again
+            </button>
+        </div>
+
+
+        <!-- Empty State -->
+        <div class="status-container empty-state" *ngIf="!loading && !errorMessage && cities.length === 0">
+            <h3>No cities available</h3>
+
+            <p>
+                There are currently no cities to display.
+                Please check again later.
+            </p>
+        </div>
+
+
+        <!-- City Cards -->
+        <div class="cities-grid" *ngIf="!loading && !errorMessage && cities.length > 0">
+
+            <article class="city-card" *ngFor="let city of cities" [attr.data-city-id]="city.id"
+                [routerLink]="['/cities', city.id]" role="link" tabindex="0">
+
+                <!-- City Image -->
+                <div class="city-card-image">
+
+                    <img *ngIf="city.imageUrl" [src]="city.imageUrl" [alt]="city.name" loading="lazy" />
+
+                    <!-- Fallback -->
+                    <div class="city-image-placeholder" *ngIf="!city.imageUrl">
+                        <span>{{ getCityInitials(city.name) }}</span>
+                    </div>
+
+                    <!-- Image Shade -->
+                    <div class="city-image-shade"></div>
+
+                    <!-- State Name -->
+                    <span class="city-state" *ngIf="city.stateName">
+                        {{ city.stateName }}
+                    </span>
+
+                </div>
+
+
+                <!-- City Information -->
+                <div class="city-card-content">
+
+                    <h3>{{ city.name }}</h3>
+
+                    <p>{{ getCityDescription(city) }}</p>
+
+                    <!-- Card Footer -->
+                    <div class="city-card-footer">
+
+                        <span class="discover-label">
+                            Explore the city
+                        </span>
+
+                        <span class="city-arrow" aria-hidden="true">
+                            ↗
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+</main>

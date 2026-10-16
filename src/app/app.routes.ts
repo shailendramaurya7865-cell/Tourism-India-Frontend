@@ -22,6 +22,12 @@ export const routes: Routes = [
         .then(m => m.StateDetailComponent)
   },
   {
+    path: 'cities/:id',
+    loadComponent: () =>
+      import('./features/city-detail/city-detail.component')
+        .then(m => m.CityDetailComponent)
+  },
+  {
     path: 'cities',
     loadComponent: () =>
       import('./features/cities/city-list.component')

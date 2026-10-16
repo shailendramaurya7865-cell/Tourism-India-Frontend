@@ -74,8 +74,7 @@
         <!-- City Cards -->
         <div class="cities-grid" *ngIf="!loading && !errorMessage && cities.length > 0">
 
-            <article class="city-card" *ngFor="let city of cities" [attr.data-city-id]="city.id"
-                [routerLink]="['/cities', city.id]" role="link" tabindex="0">
+            <article class="city-card" *ngFor="let city of cities" [routerLink]="['/cities', city.id]">
 
                 <!-- City Image -->
                 <div class="city-card-image">

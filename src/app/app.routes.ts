@@ -33,6 +33,18 @@ export const routes: Routes = [
       import('./features/cities/city-list.component')
         .then(m => m.CitiesListComponent)
   },
+   {
+    path: 'tourist-places',
+    loadComponent: () =>
+      import('./features/tourist-places/tourist-place-list.component')
+        .then(m => m.TouristPlacesListComponent)
+  },
+  {
+    path: 'tourist-places/:id',
+    loadComponent: () =>
+      import('./features/tourist-place-detail/tourist-place-detail.component')
+        .then(m => m.TouristPlaceDetailComponent)
+  },
   {
     path: '**',
     redirectTo: ''

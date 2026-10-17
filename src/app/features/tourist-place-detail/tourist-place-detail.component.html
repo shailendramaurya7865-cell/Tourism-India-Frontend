@@ -1,0 +1,549 @@
+<!-- Loading State -->
+<div
+  class="status-container"
+  *ngIf="loading"
+  aria-live="polite"
+>
+  <div class="loader"></div>
+  <p>Discovering this beautiful destination...</p>
+</div>
+
+<!-- Error State -->
+<div
+  class="status-container error-state"
+  *ngIf="!loading && errorMessage"
+  aria-live="polite"
+>
+  <div class="status-icon">⚠️</div>
+  <h2>Something went wrong</h2>
+  <p>{{ errorMessage }}</p>
+
+  <button
+    type="button"
+    class="retry-button"
+    (click)="retry()"
+  >
+    Try Again
+  </button>
+</div>
+
+<!-- Tourist Place Detail Content -->
+<ng-container
+  *ngIf="!loading && !errorMessage && hasPlaceData && place as p"
+>
+  <!-- Hero Section -->
+  <section class="state-hero tourist-place-hero">
+
+    <img
+      *ngIf="p.placeholderImage"
+      class="hero-image"
+      [src]="p.placeholderImage"
+      [alt]="p.name"
+    />
+
+    <div
+      *ngIf="!p.placeholderImage"
+      class="hero-image-placeholder"
+    ></div>
+
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <a routerLink="/">Home</a>
+        <span>/</span>
+        <a routerLink="/tourist-places">Tourist Places</a>
+        <span>/</span>
+        <span>{{ p.name }}</span>
+      </div>
+
+      <span class="hero-label">DISCOVER INCREDIBLE INDIA</span>
+
+      <h1>{{ p.name }}</h1>
+
+      <!-- City and State -->
+      <div class="place-hero-location">
+
+        <a
+          *ngIf="p.city?.id"
+          [routerLink]="['/cities', p.city.id]"
+        >
+          {{ p.city.name }}
+        </a>
+
+        <span
+          *ngIf="p.city?.id && p.state?.id"
+          class="location-separator"
+        >
+          ,
+        </span>
+
+        <a
+          *ngIf="p.state?.id"
+          [routerLink]="['/states', p.state.id]"
+        >
+          {{ p.state.name }}
+        </a>
+
+        <span *ngIf="!p.city?.id && !p.state?.id">
+          Location information unavailable
+        </span>
+
+      </div>
+
+      <!-- Rating -->
+      <div
+        class="place-rating hero-rating"
+        *ngIf="p.rating?.average != null && p.rating.average > 0"
+      >
+        <span class="star">★</span>
+        <strong>{{ p.rating.average | number:'1.1-1' }}</strong>
+
+        <span class="review-count">
+          ({{ formatReviewCount(p.rating.totalReviews) }} reviews)
+        </span>
+      </div>
+
+      <!-- Categories -->
+      <div
+        class="hero-categories"
+        *ngIf="p.categories?.length"
+      >
+        <span
+          class="category-badge"
+          *ngFor="let category of p.categories"
+        >
+          {{ category.name }}
+        </span>
+      </div>
+
+      <a href="#about-place" class="explore-button">
+        Discover This Place
+        <span>↓</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- About Tourist Place -->
+  <section class="section about-section" id="about-place">
+
+    <div class="section-heading">
+      <span class="eyebrow">GET TO KNOW THIS PLACE</span>
+
+      <h2>About {{ p.name }}</h2>
+
+      <p class="section-subtitle">
+        Discover the history, significance and unique experiences
+        that make {{ p.name }} special.
+      </p>
+    </div>
+
+    <div class="about-content">
+      <div class="about-decoration">✦</div>
+
+      <p class="state-description">
+        {{
+          p.description ||
+          p.shortDescription ||
+          'Discover the history, culture and unique experiences of this remarkable destination in India.'
+        }}
+      </p>
+    </div>
+
+    <div class="city-state-info">
+      <span>Located in</span>
+
+      <a
+        *ngIf="p.city?.id"
+        [routerLink]="['/cities', p.city.id]"
+      >
+        {{ p.city.name }} →
+      </a>
+
+      <span *ngIf="p.city?.id && p.state?.id">, </span>
+
+      <a
+        *ngIf="p.state?.id"
+        [routerLink]="['/states', p.state.id]"
+      >
+        {{ p.state.name }} →
+      </a>
+
+      <span *ngIf="!p.city?.id && !p.state?.id">
+        Location details will be updated soon.
+      </span>
+    </div>
+
+  </section>
+
+  <!-- Visitor Information -->
+  <section class="section visitor-information-section">
+
+    <div class="section-heading">
+      <span class="eyebrow">PLAN YOUR VISIT</span>
+
+      <h2>Visitor Information</h2>
+
+      <p class="section-subtitle">
+        Everything you need to know before visiting {{ p.name }}.
+      </p>
+    </div>
+
+    <div class="visitor-info-grid">
+
+      <!-- Opening Time -->
+      <article class="visitor-info-card">
+        <span class="visitor-info-icon">🕘</span>
+
+        <div>
+          <h3>Opening Time</h3>
+
+          <p>
+            {{
+              p.visitorInformationDto?.timing?.openTime ||
+              'Not available'
+            }}
+          </p>
+        </div>
+      </article>
+
+      <!-- Closing Time -->
+      <article class="visitor-info-card">
+        <span class="visitor-info-icon">🕕</span>
+
+        <div>
+          <h3>Closing Time</h3>
+
+          <p>
+            {{
+              p.visitorInformationDto?.timing?.closeTime ||
+              'Not available'
+            }}
+          </p>
+        </div>
+      </article>
+
+      <!-- Entry Fee -->
+      <article class="visitor-info-card">
+        <span class="visitor-info-icon">🎟️</span>
+
+        <div>
+          <h3>Entry Fee</h3>
+
+          <ng-container
+            *ngIf="
+              p.visitorInformationDto?.entryFees?.indianAdult != null;
+              else noEntryFee
+            "
+          >
+            <p>
+              {{
+                p.visitorInformationDto?.entryFees?.indianAdult
+                  | currency:
+                    (p.visitorInformationDto?.entryFees?.currency || 'INR')
+                    :'symbol-narrow'
+              }}
+            </p>
+
+            <span class="info-note">For Indian adults</span>
+          </ng-container>
+
+          <ng-template #noEntryFee>
+            <p>Not available</p>
+          </ng-template>
+        </div>
+      </article>
+
+      <!-- Time Required -->
+      <article class="visitor-info-card">
+        <span class="visitor-info-icon">⏳</span>
+
+        <div>
+          <h3>Time Required</h3>
+          <p>Not available</p>
+        </div>
+      </article>
+
+      <!-- Weekly Off -->
+      <article class="visitor-info-card">
+        <span class="visitor-info-icon">📅</span>
+
+        <div>
+          <h3>Weekly Off</h3>
+
+          <p
+            *ngIf="
+              p.visitorInformationDto?.timing?.closedDays?.length;
+              else noClosedDays
+            "
+          >
+            {{ p.visitorInformationDto?.timing?.closedDays?.join(', ') }}
+          </p>
+
+          <ng-template #noClosedDays>
+            <p>Not available</p>
+          </ng-template>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Best Time to Visit -->
+  <section class="section best-time-section">
+
+    <div class="section-heading">
+      <span class="eyebrow">CHOOSE THE RIGHT SEASON</span>
+
+      <h2>Best Time to Visit</h2>
+
+      <p class="section-subtitle">
+        Find the ideal time to experience {{ p.name }}.
+      </p>
+    </div>
+
+    <div class="best-time-content">
+      <span class="best-time-icon">🌤️</span>
+
+      <div>
+        <h3>When should you visit?</h3>
+
+        <p>
+          {{
+            p.visitorInformationDto?.bestTimeToVisit ||
+            'The best time to visit will be updated soon.'
+          }}
+        </p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- How to Reach -->
+  <section class="section how-to-reach-section">
+
+    <div class="section-heading">
+      <span class="eyebrow">GETTING THERE</span>
+
+      <h2>How to Reach {{ p.name }}</h2>
+
+      <p class="section-subtitle">
+        Find out how to reach this destination.
+      </p>
+    </div>
+
+    <div class="how-to-reach-content">
+
+      <div class="reach-icon">📍</div>
+
+      <div class="reach-details">
+
+        <p *ngIf="p.locationDto?.address">
+          {{ p.locationDto.address }}
+        </p>
+
+        <p *ngIf="!p.locationDto?.address">
+          Address information is not available yet.
+        </p>
+
+        <p
+          class="reach-description"
+          *ngIf="p.howToReach?.length"
+        >
+          {{ p.howToReach.join(' ') }}
+        </p>
+
+        <p
+          class="reach-description"
+          *ngIf="!p.howToReach?.length"
+        >
+          Travel directions will be available soon.
+        </p>
+
+        <a
+          *ngIf="
+            p.locationDto?.latitude != null &&
+            p.locationDto?.longitude != null
+          "
+          class="map-link"
+          [href]="
+            'https://www.google.com/maps/search/?api=1&query=' +
+            p.locationDto.latitude + ',' +
+            p.locationDto.longitude
+          "
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View on Google Maps →
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Nearby Tourist Places -->
+  <section class="section places-section nearby-section">
+
+    <div class="section-header-row">
+
+      <div class="section-heading">
+        <span class="eyebrow">EXPLORE MORE</span>
+
+        <h2>Nearby Places</h2>
+
+        <p class="section-subtitle">
+          Discover more attractions around {{ p.name }}.
+        </p>
+      </div>
+
+      <a
+        class="view-all-link"
+        [routerLink]="['/tourist-places']"
+        [queryParams]="{
+          cityId: p.city?.id,
+          stateId: p.state?.id
+        }"
+      >
+        Explore More
+        <span>→</span>
+      </a>
+
+    </div>
+
+    <!-- Nearby Places Grid -->
+    <div class="place-grid" *ngIf="nearbyPlaces.length > 0">
+
+      <article
+        class="place-card"
+        *ngFor="let nearby of nearbyPlaces"
+      >
+
+        <div class="place-image-wrapper">
+
+          <img
+            *ngIf="nearby.imageUrl"
+            [src]="nearby.imageUrl"
+            [alt]="nearby.name"
+            loading="lazy"
+          />
+
+          <div
+            *ngIf="!nearby.imageUrl"
+            class="place-image-placeholder"
+          >
+            <span>🏛️</span>
+            <small>Discover this destination</small>
+          </div>
+
+          <span
+            class="place-city-badge"
+            *ngIf="nearby.cityName"
+          >
+            {{ nearby.cityName }}
+          </span>
+
+        </div>
+
+        <div class="place-card-body">
+
+          <div
+            class="place-rating"
+            *ngIf="
+              nearby.rating?.average != null &&
+              nearby.rating.average > 0
+            "
+          >
+            <span class="star">★</span>
+
+            <strong>
+              {{ nearby.rating.average | number:'1.1-1' }}
+            </strong>
+
+            <span class="review-count">
+              ({{ formatReviewCount(nearby.rating.totalReviews) }} reviews)
+            </span>
+          </div>
+
+          <h3>{{ nearby.name }}</h3>
+
+          <p class="place-location">
+            <span>📍</span>
+            {{ nearby.cityName || 'India' }}<span *ngIf="nearby.stateName">, {{ nearby.stateName }}</span>
+          </p>
+
+          <p
+            class="place-distance"
+            *ngIf="nearby.distanceKm != null"
+          >
+            {{ nearby.distanceKm | number:'1.0-1' }} km away
+          </p>
+
+          <a
+            class="place-explore-link"
+            [routerLink]="[
+              '/tourist-places',
+              nearby.slug || nearby.id
+            ]"
+          >
+            Explore destination
+            <span>→</span>
+          </a>
+
+        </div>
+      </article>
+    </div>
+
+    <!-- Empty Nearby Places State -->
+    <div
+      class="empty-section"
+      *ngIf="nearbyPlaces.length === 0"
+    >
+      <h3>More places to discover</h3>
+
+      <p>
+        Nearby tourist attractions for {{ p.name }}
+        will be available soon.
+      </p>
+
+      <a
+        class="view-all-link"
+        [routerLink]="['/tourist-places']"
+        [queryParams]="{ cityId: p.city?.id }"
+      >
+        Explore All Tourist Places →
+      </a>
+    </div>
+
+  </section>
+
+  <!-- Bottom Call to Action -->
+  <section class="state-cta tourist-place-cta">
+
+    <div class="cta-content">
+      <span class="eyebrow">YOUR NEXT ADVENTURE</span>
+
+      <h2>Ready to explore {{ p.name }}?</h2>
+
+      <p>
+        Make your journey memorable by discovering the history,
+        culture and attractions of incredible India.
+      </p>
+
+      <a
+        [routerLink]="['/tourist-places']"
+        [queryParams]="{ cityId: p.city?.id }"
+        class="cta-button"
+      >
+        Explore More Places
+        <span>→</span>
+      </a>
+    </div>
+
+    <div class="cta-decoration">✦</div>
+
+  </section>
+
+</ng-container>

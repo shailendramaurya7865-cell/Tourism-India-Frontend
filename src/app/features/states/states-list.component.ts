@@ -78,4 +78,9 @@ export class StatesListComponent implements OnInit {
         return state.description ||
             `Discover the culture, heritage, landscapes and remarkable destinations of ${state.name}.`;
     }
+
+    getStateTagline(state: State): string {
+        return state.tagline ||
+            `Discover the culture, heritage, landscapes and remarkable destinations of ${state.name}.`;
+    }
 }

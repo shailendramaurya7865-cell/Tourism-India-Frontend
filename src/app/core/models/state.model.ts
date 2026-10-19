@@ -5,4 +5,5 @@ export interface State {
   code?: string;
   imageUrl?: string;
   description?: string;
+  tagline?:string
 }

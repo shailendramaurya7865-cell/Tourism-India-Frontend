@@ -6,7 +6,6 @@
 
 <!-- Error State -->
 <div class="status-container error-state" *ngIf="!loading && errorMessage">
-
     <div class="status-icon">⚠️</div>
 
     <h2>Something went wrong</h2>
@@ -29,6 +28,7 @@
 
         <div class="hero-content">
 
+            <!-- Breadcrumb -->
             <div class="breadcrumb">
                 <a routerLink="/">Home</a>
                 <span>/</span>
@@ -41,12 +41,9 @@
 
             <h1>{{ state.name }}</h1>
 
-            <p class="hero-tagline">{{ state.tagLine }}</p>
-
-            <a href="#about-state" class="explore-button">
-                Discover the State
-                <span>↓</span>
-            </a>
+            <p class="hero-tagline">
+                {{ state.tagline }}
+            </p>
 
         </div>
     </section>
@@ -55,17 +52,10 @@
     <section class="section about-section" id="about-state">
 
         <div class="section-heading">
-            <span class="eyebrow">GET TO KNOW</span>
-            <h2>Discover {{ state.name }}</h2>
-            <p class="section-subtitle">
-                Explore the culture, heritage and experiences that make
-                this state special.
-            </p>
+            <h2>About {{ state.name }}</h2>
         </div>
 
         <div class="about-content">
-            <div class="about-decoration">✦</div>
-
             <p class="state-description">
                 {{ state.description }}
             </p>
@@ -80,7 +70,9 @@
 
             <div class="section-heading">
                 <span class="eyebrow">PLACES TO EXPLORE</span>
+
                 <h2>Popular Cities</h2>
+
                 <p class="section-subtitle">
                     Discover the remarkable cities of {{ state.name }}.
                 </p>
@@ -116,7 +108,10 @@
 
                 <div class="city-description">
                     <p>{{ city.cityDescription }}</p>
-                    <span class="card-arrow">Explore city →</span>
+
+                    <span class="card-arrow">
+                        Explore city →
+                    </span>
                 </div>
 
             </a>
@@ -127,10 +122,8 @@
 
     <!-- Empty Cities State -->
     <section class="section empty-section" *ngIf="popularCities.length === 0">
-
         <h2>Popular Cities</h2>
         <p>City information will be available soon.</p>
-
     </section>
 
     <!-- Top Tourist Places -->
@@ -140,7 +133,9 @@
 
             <div class="section-heading">
                 <span class="eyebrow">MUST-VISIT DESTINATIONS</span>
+
                 <h2>Top Tourist Places</h2>
+
                 <p class="section-subtitle">
                     Discover the attractions you shouldn't miss in
                     {{ state.name }}.
@@ -175,7 +170,6 @@
                 <div class="place-card-body">
 
                     <div class="place-rating" *ngIf="place.avgRating">
-
                         <span class="star">★</span>
 
                         <strong>
@@ -183,9 +177,9 @@
                         </strong>
 
                         <span class="review-count">
-                            ({{ formatReviewCount(place.reviewCount ?? 0) }} reviews)
+                            ({{ formatReviewCount(place.reviewCount ?? 0) }}
+                            reviews)
                         </span>
-
                     </div>
 
                     <h3>{{ place.title }}</h3>
@@ -209,10 +203,8 @@
 
     <!-- Empty Tourist Places State -->
     <section class="section empty-section" *ngIf="topTouristPlaces.length === 0">
-
         <h2>Top Tourist Places</h2>
         <p>Tourist attractions will be available soon.</p>
-
     </section>
 
     <!-- Bottom CTA -->

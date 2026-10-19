@@ -1,9 +1,18 @@
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  ChangeDetectorRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 
 import { CityDetailService } from '../../core/services/city-detail.service';
-import { CityDetailCity, NearbyCity, CityDetailData } from '../../core/models/city-detail-response.model';
+import {
+  CityDetailCity,
+  NearbyCity,
+  CityDetailData
+} from '../../core/models/city-detail-response.model';
 import { TouristPlace } from '../../core/models/tourist-place.model';
 
 @Component({
@@ -17,6 +26,7 @@ export class CityDetailComponent implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly cityDetailService = inject(CityDetailService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   city: CityDetailCity | null = null;
   touristPlaces: TouristPlace[] = [];
@@ -32,9 +42,12 @@ export class CityDetailComponent implements OnInit {
       const id = Number(params.get('id'));
 
       if (!Number.isInteger(id) || id <= 0) {
+        this.city = null;
         this.errorMessage = 'Invalid city ID.';
         this.hasCityData = false;
         this.loading = false;
+
+        this.cdr.detectChanges();
         return;
       }
 
@@ -52,6 +65,8 @@ export class CityDetailComponent implements OnInit {
     this.nearbyPlaces = [];
     this.activities = [];
 
+    this.cdr.detectChanges();
+
     this.cityDetailService.getCityDetail(cityId).subscribe({
       next: (response) => {
         const data: CityDetailData | undefined = response.data;
@@ -65,12 +80,16 @@ export class CityDetailComponent implements OnInit {
           this.activities = [];
 
           this.hasCityData = true;
+          this.errorMessage = '';
         } else {
           this.errorMessage = 'City details could not be found.';
+          this.hasCityData = false;
         }
 
         this.loading = false;
+        this.cdr.detectChanges();
       },
+
       error: (error) => {
         console.error('Error loading city details:', error);
 
@@ -78,6 +97,9 @@ export class CityDetailComponent implements OnInit {
           'Unable to load city details. Please try again.';
 
         this.loading = false;
+        this.hasCityData = false;
+
+        this.cdr.detectChanges();
       }
     });
   }
@@ -94,6 +116,10 @@ export class CityDetailComponent implements OnInit {
       this.loadCityDetail(id);
     } else {
       this.errorMessage = 'Invalid city ID.';
+      this.loading = false;
+      this.hasCityData = false;
+
+      this.cdr.detectChanges();
     }
   }
 

@@ -6,7 +6,7 @@ export interface StateDetailState {
   name: string;
   slug: string;
   imageUrl: string;
-  tagLine: string;
+  tagline: string;
   description: string;
 }
 

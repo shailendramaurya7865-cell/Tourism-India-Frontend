@@ -1,0 +1,287 @@
+
+<main class="tourist-places-page explore-category-page">
+
+  <!-- Category Hero -->
+  <section
+    class="places-hero category-hero"
+    [style.backgroundImage]="
+      'linear-gradient(90deg, rgba(12, 29, 23, 0.82), rgba(12, 29, 23, 0.25)), url('
+      + categoryImage + ')'
+    "
+  >
+    <div class="places-hero-content">
+
+      <span class="eyebrow">DISCOVER INCREDIBLE INDIA</span>
+
+      <h1>Explore {{ categoryName }} Places</h1>
+
+      <p>
+        Discover amazing {{ categoryName.toLowerCase() }} destinations,
+        cultural treasures and unforgettable experiences across India.
+      </p>
+
+      <div
+        class="place-count"
+        *ngIf="!loading && !errorMessage && touristPlaces.length > 0"
+      >
+        <span class="count-number">{{ touristPlaces.length }}</span>
+        <span>
+          {{ touristPlaces.length === 1 ? 'Place' : 'Places' }} to explore
+        </span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Category Listing -->
+  <section class="places-section">
+
+    <!-- Heading -->
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">FIND YOUR NEXT DESTINATION</span>
+
+        <h2>Explore {{ categoryName }} Destinations</h2>
+
+        <p>
+          Discover the best places and narrow your search by state and city.
+        </p>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <section class="category-filters">
+
+      <div class="filter-heading">
+        <div class="filter-icon" aria-hidden="true">☷</div>
+
+        <div>
+          <h3>Filter destinations</h3>
+          <p>Choose a state or city to find matching places.</p>
+        </div>
+      </div>
+
+      <div class="filter-grid">
+
+        <!-- State Filter -->
+        <div class="filter-field">
+          <label for="stateFilter">Select state</label>
+
+          <select
+            id="stateFilter"
+            [(ngModel)]="selectedStateId"
+            (ngModelChange)="onStateChange()"
+            [disabled]="loadingStates"
+          >
+            <option [ngValue]="null">
+              {{ loadingStates ? 'Loading states...' : 'All states' }}
+            </option>
+
+            <option
+              *ngFor="let state of states"
+              [ngValue]="state.id"
+            >
+              {{ state.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- City Filter -->
+        <div class="filter-field">
+          <label for="cityFilter">Select city</label>
+
+          <select
+            id="cityFilter"
+            [(ngModel)]="selectedCityId"
+            (ngModelChange)="onCityChange()"
+            [disabled]="selectedStateId === null || loadingCities"
+          >
+            <option [ngValue]="null">
+              {{ loadingCities ? 'Loading cities...' : 'All cities' }}
+            </option>
+
+            <option
+              *ngFor="let city of cities"
+              [ngValue]="city.id"
+            >
+              {{ city.name }}
+            </option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="filter-footer">
+        <span>
+          Showing {{ categoryName.toLowerCase() }} places
+          <ng-container *ngIf="selectedStateId !== null">
+            in the selected state
+          </ng-container>
+          <ng-container *ngIf="selectedCityId !== null">
+            and city
+          </ng-container>
+        </span>
+
+        <button
+          type="button"
+          class="clear-filters-button"
+          (click)="clearFilters()"
+          [disabled]="selectedStateId === null && selectedCityId === null"
+        >
+          Clear filters
+        </button>
+      </div>
+
+    </section>
+
+    <!-- Results Heading -->
+    <div class="results-heading">
+      <div>
+        <span class="eyebrow">YOUR NEXT JOURNEY</span>
+        <h2>{{ categoryName }} Places</h2>
+      </div>
+
+      <span
+        class="results-total"
+        *ngIf="!loading && !errorMessage"
+      >
+        {{ touristPlaces.length }}
+        {{ touristPlaces.length === 1 ? 'Place' : 'Places' }}
+      </span>
+    </div>
+
+    <!-- Loading State -->
+    <div
+      class="status-container"
+      *ngIf="loading"
+      aria-live="polite"
+    >
+      <div class="loader"></div>
+      <p>Discovering amazing places for you...</p>
+    </div>
+
+    <!-- Error State -->
+    <div
+      class="status-container error-state"
+      *ngIf="!loading && errorMessage"
+      aria-live="polite"
+    >
+      <div class="status-icon" aria-hidden="true">!</div>
+
+      <h3>We couldn't load the tourist places</h3>
+
+      <p>{{ errorMessage }}</p>
+
+      <button
+        type="button"
+        class="retry-button"
+        (click)="retry()"
+      >
+        Try Again
+      </button>
+    </div>
+
+    <!-- Empty State -->
+    <div
+      class="status-container empty-state"
+      *ngIf="!loading && !errorMessage && touristPlaces.length === 0"
+    >
+      <div class="status-icon" aria-hidden="true">⌕</div>
+
+      <h3>No {{ categoryName.toLowerCase() }} places found</h3>
+
+      <p>
+        There are no tourist places matching your current selection.
+        Try another state or city, or clear the filters.
+      </p>
+
+      <button
+        type="button"
+        class="retry-button"
+        (click)="clearFilters()"
+      >
+        View All {{ categoryName }} Places
+      </button>
+    </div>
+
+    <!-- Tourist Places Grid -->
+    <div
+      class="places-grid"
+      *ngIf="!loading && !errorMessage && touristPlaces.length > 0"
+    >
+
+      <article
+        class="place-card"
+        *ngFor="let place of touristPlaces; trackBy: trackByPlaceId"
+        [attr.data-place-id]="place.id"
+        [routerLink]="['/tourist-places', place.id]"
+        role="link"
+        tabindex="0"
+      >
+
+        <!-- Place Image -->
+        <div class="place-card-image">
+
+          <img
+            *ngIf="place.imageUrl"
+            [src]="place.imageUrl"
+            [alt]="place.title"
+            loading="lazy"
+          />
+
+          <div
+            class="place-image-placeholder"
+            *ngIf="!place.imageUrl"
+          >
+            <span>{{ getTouristPlacesInitials(place.title) }}</span>
+          </div>
+
+          <!-- Rating -->
+          <span
+            class="place-rating"
+            *ngIf="place.avgRating != null && place.avgRating > 0"
+          >
+            <span aria-hidden="true">★</span>
+            {{ place.avgRating | number:'1.1-1' }}
+          </span>
+
+          <!-- Category -->
+          <span class="category-badge">{{ categoryName }}</span>
+
+        </div>
+
+        <!-- Place Information -->
+        <div class="place-card-content">
+
+          <div class="place-location">
+            <span aria-hidden="true">⌖</span>
+
+            <span>
+              {{ place.cityName || 'India' }}
+
+              <ng-container *ngIf="place.stateName">
+                , {{ place.stateName }}
+              </ng-container>
+            </span>
+          </div>
+
+          <h3>{{ place.title }}</h3>
+
+          <p class="place-description">
+            {{ place.slug }}
+          </p>
+
+          <div class="place-card-footer">
+            <span class="discover-label">Explore destination</span>
+
+            <span class="place-arrow" aria-hidden="true">↗</span>
+          </div>
+
+        </div>
+      </article>
+
+    </div>
+
+  </section>
+
+</main>

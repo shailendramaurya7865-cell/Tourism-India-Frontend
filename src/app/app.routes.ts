@@ -1,3 +1,4 @@
+
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
@@ -33,7 +34,7 @@ export const routes: Routes = [
       import('./features/cities/city-list.component')
         .then(m => m.CitiesListComponent)
   },
-   {
+  {
     path: 'tourist-places',
     loadComponent: () =>
       import('./features/tourist-places/tourist-place-list.component')
@@ -45,6 +46,15 @@ export const routes: Routes = [
       import('./features/tourist-place-detail/tourist-place-detail.component')
         .then(m => m.TouristPlaceDetailComponent)
   },
+
+  // Category exploration page
+  {
+    path: 'explore-category/:slug',
+    loadComponent: () =>
+      import('./features/categories/explore-category.component')
+        .then(m => m.ExploreCategoryComponent)
+  },
+
   {
     path: '**',
     redirectTo: ''

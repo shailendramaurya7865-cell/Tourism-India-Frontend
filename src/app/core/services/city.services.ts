@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams  } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
 import { Observable, forkJoin, map, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
@@ -27,4 +27,16 @@ export class CityService {
         })
       );
   }
+
+  getCitiesByStateId(stateId: number): Observable<City[]> {
+  const params = new HttpParams().set('stateId', stateId);
+
+  return this.http
+    .get<ApiResponse<City[]> | City[]>(`${this.apiUrl}/cities`, { params })
+    .pipe(
+      map(response =>
+        Array.isArray(response) ? response : response.data ?? []
+      )
+    );
+}
 }

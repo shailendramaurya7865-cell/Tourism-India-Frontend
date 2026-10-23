@@ -189,7 +189,7 @@
 
       </div>
     </section>
-    
+
     <!-- Handpicked Destinations -->
     <!-- Uses the same API data instead of a separate hardcoded array -->
     <section class="section content-container featured-section" *ngIf="featuredDestinations.length > 0">
@@ -233,6 +233,7 @@
     </section>
 
     <!-- Explore by Category -->
+
     <section class="section section-muted">
       <div class="content-container">
 
@@ -252,8 +253,8 @@
         </div>
 
         <div class="category-grid" *ngIf="categories.length > 0; else noCategories">
-          <a class="category-card" *ngFor="let category of categories" routerLink="/tourist-places"
-            [queryParams]="{ categoryId: category.id }">
+          <a class="category-card" *ngFor="let category of categories"
+            [routerLink]="['/explore-category', category.slug]">
             <div class="category-icon" aria-hidden="true">
               {{ getCategoryIcon(category.name) }}
             </div>

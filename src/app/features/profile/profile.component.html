@@ -1,0 +1,96 @@
+
+<section class="profile-page">
+  <div class="profile-container">
+
+    <a routerLink="/" class="back-home">
+      ← Back to Tourism India
+    </a>
+
+    <div class="profile-heading">
+      <span class="eyebrow">YOUR ACCOUNT</span>
+      <h1>Manage your profile</h1>
+      <p>View your account information and manage your Tourism India account.</p>
+    </div>
+
+    <div *ngIf="loading" class="profile-state" role="status">
+      Loading your profile...
+    </div>
+
+    <div *ngIf="errorMessage" class="profile-error" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <ng-container *ngIf="!loading && user">
+
+      <article class="profile-card">
+
+        <div class="profile-card-heading">
+          <div class="avatar">
+            <img
+              *ngIf="user.picture || user.profileImgUrl"
+              [src]="user.picture || user.profileImgUrl"
+              alt="Your profile photo"
+              referrerpolicy="no-referrer" />
+
+            <span *ngIf="!user.picture && !user.profileImgUrl">
+              {{ initials }}
+            </span>
+          </div>
+
+          <div class="profile-identity">
+            <h2>{{ displayName }}</h2>
+            <p>{{ user.email }}</p>
+            <span class="account-badge">Tourism India account</span>
+          </div>
+        </div>
+
+        <div class="profile-divider"></div>
+
+        <h3>Personal information</h3>
+
+        <div class="profile-details">
+          <div class="detail-item">
+            <span>First name</span>
+            <strong>{{ user.firstName || 'Not provided' }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Last name</span>
+            <strong>{{ user.lastName || 'Not provided' }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Email address</span>
+            <strong>{{ user.email }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Sign-in method</span>
+            <strong>Google</strong>
+          </div>
+        </div>
+
+        <p class="profile-note">
+          Your profile details are currently managed through your Google
+          sign-in information. Profile editing can be added separately.
+        </p>
+
+        <div class="profile-actions">
+          <a routerLink="/" class="secondary-button">
+            Explore destinations
+          </a>
+
+          <button
+            type="button"
+            class="logout-button"
+            [disabled]="loggingOut"
+            (click)="logout()">
+            {{ loggingOut ? 'Signing out...' : 'Logout' }}
+          </button>
+        </div>
+
+      </article>
+    </ng-container>
+
+  </div>
+</section>

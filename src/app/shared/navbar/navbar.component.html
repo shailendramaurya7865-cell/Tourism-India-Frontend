@@ -37,11 +37,53 @@
         Explore India <span>↗</span>
       </a>
 
-
       <div class="auth-links">
-        <a class="login-link" routerLink="/login" routerLinkActive="active" (click)="closeMobileMenu()">
-          Login
-        </a>
+        <ng-container *ngIf="currentUser$ | async as user; else loggedOut">
+
+          <div class="profile-menu-container">
+
+            <button class="profile-trigger" type="button" (click)="toggleProfileMenu()"
+              [attr.aria-expanded]="profileMenuOpen" aria-label="Open profile menu">
+
+              <img *ngIf="user.picture || user.profileImgUrl" class="profile-avatar"
+                [src]="user.picture || user.profileImgUrl" alt="" referrerpolicy="no-referrer" />
+
+              <span *ngIf="!user.picture && !user.profileImgUrl" class="profile-avatar profile-initials">
+                {{ getInitials(user) }}
+              </span>
+
+              <span class="profile-chevron" aria-hidden="true">⌄</span>
+            </button>
+
+            <div class="profile-dropdown" *ngIf="profileMenuOpen">
+
+              <div class="profile-dropdown-user">
+                <strong>
+                  {{ user.name || ((user.firstName || '') + ' ' + (user.lastName || '')).trim() || user.email }}
+                </strong>
+                <span>{{ user.email }}</span>
+              </div>
+
+              <a routerLink="/profile" routerLinkActive="active" (click)="closeMobileMenu()">
+                <span aria-hidden="true">👤</span>
+                Manage Profile
+              </a>
+
+              <button type="button" class="logout-button" [disabled]="loggingOut" (click)="logout()">
+                <span aria-hidden="true">↪</span>
+                {{ loggingOut ? 'Signing out...' : 'Logout' }}
+              </button>
+
+            </div>
+          </div>
+
+        </ng-container>
+
+        <ng-template #loggedOut>
+          <a class="login-link" routerLink="/login" routerLinkActive="active" (click)="closeMobileMenu()">
+            Login
+          </a>
+        </ng-template>
       </div>
 
     </nav>

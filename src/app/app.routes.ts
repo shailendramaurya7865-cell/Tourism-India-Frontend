@@ -55,6 +55,20 @@ export const routes: Routes = [
         .then(m => m.ExploreCategoryComponent)
   },
 
+   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/login/login.component')
+        .then(m => m.LoginComponent)
+  },
+
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./features/profile/profile.component')
+        .then(m => m.ProfileComponent)
+  },
+
   {
     path: '**',
     redirectTo: ''

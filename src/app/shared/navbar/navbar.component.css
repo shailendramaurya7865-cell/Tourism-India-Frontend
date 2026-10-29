@@ -219,3 +219,136 @@
 }
 
 }
+
+/* Authentication area */
+.auth-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-link {
+  text-decoration: none;
+}
+
+/* Profile menu */
+.profile-menu-container {
+  position: relative;
+}
+
+.profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 3px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #24352b;
+  cursor: pointer;
+}
+
+.profile-trigger:hover {
+  border-color: #2f7650;
+}
+
+.profile-avatar {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e8f3eb;
+}
+
+.profile-initials {
+  color: #245d3c;
+  font-weight: 700;
+}
+
+.profile-chevron {
+  padding-right: 8px;
+  font-size: 18px;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1000;
+  width: 250px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 12%);
+}
+
+.profile-dropdown-user {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid #edf0ed;
+}
+
+.profile-dropdown-user strong {
+  color: #213a2a;
+  font-size: 14px;
+}
+
+.profile-dropdown-user span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.profile-dropdown > a,
+.profile-dropdown .logout-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #374151;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.profile-dropdown > a:hover,
+.profile-dropdown .logout-button:hover {
+  background: #f1f7f2;
+  color: #245d3c;
+}
+
+.profile-dropdown .logout-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Keep the profile menu inside the mobile navigation */
+@media (max-width: 768px) {
+  .auth-links {
+    width: 100%;
+  }
+
+  .profile-menu-container {
+    width: 100%;
+  }
+
+  .profile-dropdown {
+    right: auto;
+    left: 0;
+    width: min(280px, 100%);
+  }
+}

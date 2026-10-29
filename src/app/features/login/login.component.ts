@@ -1,18 +1,8 @@
-
-import {
-  AfterViewChecked,
-  Component,
-  inject
-} from '@angular/core';
-
+import { AfterViewChecked, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-
-import { environment } from '../../../environments/environments';
-import { AuthService } from '../../core/services/auth.service';
-
+import { AuthService} from '../../core/services/auth.service';
 type LoginMethod = 'google' | 'phone' | 'email';
 
 interface GoogleCredentialResponse {
@@ -75,14 +65,10 @@ interface GoogleLoginResponse {
   styleUrl: './login.component.css'
 })
 export class LoginComponent implements AfterViewChecked {
-  private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
 
-  // API base URL configured in the Angular environment.
-  private readonly apiUrl = `${environment.apiUrl}/auth`;
-
-  // Must match google.client-id in the Spring Boot configuration.
+  // Must match the Google client ID configured in Spring Boot.
   private readonly googleClientId =
     '329854087820-aet9ru3vsj8r8htotv5bdu1rbkpvqjp0.apps.googleusercontent.com';
 
@@ -121,9 +107,11 @@ export class LoginComponent implements AfterViewChecked {
     if (!this.googleInitialized) {
       googleId.initialize({
         client_id: this.googleClientId,
+
         callback: (response: GoogleCredentialResponse) => {
           this.handleGoogleCredential(response);
         },
+
         auto_select: false,
         ux_mode: 'popup'
       });
@@ -163,7 +151,8 @@ export class LoginComponent implements AfterViewChecked {
     response: GoogleCredentialResponse
   ): void {
     if (!response?.credential) {
-      this.message = 'Google did not return a valid credential.';
+      this.message =
+        'Google did not return a valid credential.';
       return;
     }
 
@@ -174,52 +163,47 @@ export class LoginComponent implements AfterViewChecked {
     this.loading = true;
     this.message = 'Verifying your Google account...';
 
-    this.http.post<GoogleLoginResponse>(
-      `${this.apiUrl}/google`,
-      {
-        // Google returns "credential"; the backend DTO expects "idToken".
-        idToken: response.credential
-      },
-      {
-        withCredentials: true
-      }
-    ).subscribe({
-      next: (result) => {
-        this.loading = false;
+    // AuthService initializes CSRF, sends the Google login
+    // request, updates the user state, and refreshes CSRF.
+    this.authService
+      .loginWithGoogle(response.credential)
+      .subscribe({
+        next: (result) => {
+          this.loading = false;
 
-        if (!result?.success || !result.user) {
-          this.message =
-            result?.message ||
-            'Google sign-in failed. Please try again.';
-          return;
+          if (!result?.success || !result.user) {
+            this.message =
+              result?.message ||
+              'Google sign-in failed. Please try again.';
+            return;
+          }
+
+          const displayName =
+            result.user.firstName ||
+            result.user.name ||
+            result.user.email;
+
+          this.message = `Welcome, ${displayName}!`;
+          void this.router.navigateByUrl('/');
+        },
+
+        error: (error) => {
+          this.loading = false;
+          this.message = this.getGoogleLoginErrorMessage(error);
+
+          console.error('Google sign-in failed:', error);
         }
-
-        // Update shared authentication state so the navbar
-        // immediately displays the profile icon.
-        this.authService.setCurrentUser(result.user);
-
-        const displayName =
-          result.user.firstName ||
-          result.user.name ||
-          result.user.email;
-
-        this.message = `Welcome, ${displayName}!`;
-
-        // Navigate only after the backend confirms login.
-        void this.router.navigateByUrl('/');
-      },
-
-      error: (error: HttpErrorResponse) => {
-        this.loading = false;
-        this.message = this.getGoogleLoginErrorMessage(error);
-
-        console.error('Google sign-in failed:', error);
-      }
-    });
+      });
   }
 
   private getGoogleLoginErrorMessage(
-    error: HttpErrorResponse
+    error: {
+      status?: number;
+      error?: {
+        detail?: string;
+        message?: string;
+      };
+    }
   ): string {
     if (error.status === 0) {
       return 'Cannot reach the server. Check that the backend is running and CORS allows credentials.';
@@ -227,6 +211,10 @@ export class LoginComponent implements AfterViewChecked {
 
     if (error.status === 401) {
       return 'Google sign-in could not be verified. Please try again.';
+    }
+
+    if (error.status === 403) {
+      return 'Security verification failed. Please refresh the page and try again.';
     }
 
     if (error.status === 409) {
@@ -257,7 +245,8 @@ export class LoginComponent implements AfterViewChecked {
     this.message = '';
 
     if (!this.email.trim() || !this.password) {
-      this.message = 'Please enter your email and password.';
+      this.message =
+        'Please enter your email and password.';
       return;
     }
 

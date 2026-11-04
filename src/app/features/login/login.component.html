@@ -1,72 +1,22 @@
 
 <main class="auth-page">
+
+  <!-- Background decorations -->
   <div class="auth-background auth-background-one"></div>
   <div class="auth-background auth-background-two"></div>
 
   <section class="auth-layout">
 
-    <!-- Left: Welcome section -->
-    <div class="auth-intro">
-      <a routerLink="/" class="auth-brand" aria-label="Tourism India home">
-        <span class="brand-mark">🪷</span>
-        <span>Tourism India</span>
-      </a>
-
-      <div class="intro-content">
-        <span class="eyebrow">YOUR JOURNEY STARTS HERE</span>
-
-        <h1>
-          Discover India.<br />
-          <span>One journey at a time.</span>
-        </h1>
-
-        <p>
-          Explore incredible destinations, save your favourite places,
-          and plan your next adventure across India.
-        </p>
-
-        <div class="intro-features">
-          <div class="feature-item">
-            <span class="feature-icon">✦</span>
-            <span>Discover amazing destinations</span>
-          </div>
-
-          <div class="feature-item">
-            <span class="feature-icon">♡</span>
-            <span>Save places you love</span>
-          </div>
-
-          <div class="feature-item">
-            <span class="feature-icon">⌖</span>
-            <span>Make every journey memorable</span>
-          </div>
-        </div>
-      </div>
-
-      <p class="intro-footer">
-        Explore the beauty, culture and heritage of India.
-      </p>
-    </div>
-
-    <!-- Right: Authentication card -->
+    <!-- LOGIN CARD -->
     <div class="auth-card">
 
       <a routerLink="/" class="mobile-brand">
         <span>🪷</span> Tourism India
       </a>
 
-      <!-- Back button -->
-      <button
-        *ngIf="selectedMethod"
-        type="button"
-        class="back-button"
-        (click)="goBack()">
-        <span aria-hidden="true">←</span>
-        Back to all options
-      </button>
-
-      <!-- Card heading -->
+      <!-- Heading -->
       <div class="card-heading">
+
         <span class="card-eyebrow">
           {{ selectedMethod ? 'SECURE SIGN IN' : 'WELCOME TO TOURISM INDIA' }}
         </span>
@@ -88,7 +38,7 @@
         </p>
 
         <p *ngIf="selectedMethod === 'phone'">
-          Enter your mobile number to continue.
+          Enter your mobile number and password to sign in.
         </p>
 
         <p *ngIf="selectedMethod === 'email'">
@@ -98,48 +48,43 @@
         <p *ngIf="selectedMethod === 'google'">
           Continue securely using your Google account.
         </p>
+
       </div>
 
-      <!-- Authentication options -->
+      <!-- LOGIN OPTIONS -->
       <div class="auth-options" *ngIf="!selectedMethod">
 
-        <!-- Google option -->
         <button
           type="button"
           class="auth-option google-option"
           (click)="continueWithGoogle()">
 
-          <span class="google-icon" aria-hidden="true">G</span>
-
+          <span class="google-icon">G</span>
           <span class="option-label">Continue with Google</span>
+          <span class="option-arrow">→</span>
 
-          <span class="option-arrow" aria-hidden="true">→</span>
         </button>
 
-        <!-- Phone option -->
         <button
           type="button"
           class="auth-option"
           (click)="selectMethod('phone')">
 
-          <span class="option-icon phone-icon" aria-hidden="true">☎</span>
-
+          <span class="option-icon phone-icon">☎</span>
           <span class="option-label">Continue with phone</span>
+          <span class="option-arrow">→</span>
 
-          <span class="option-arrow" aria-hidden="true">→</span>
         </button>
 
-        <!-- Email option -->
         <button
           type="button"
           class="auth-option"
           (click)="selectMethod('email')">
 
-          <span class="option-icon email-icon" aria-hidden="true">✉</span>
-
+          <span class="option-icon email-icon">✉</span>
           <span class="option-label">Continue with email</span>
+          <span class="option-arrow">→</span>
 
-          <span class="option-arrow" aria-hidden="true">→</span>
         </button>
 
         <div class="separator">
@@ -152,9 +97,22 @@
           New to Tourism India?
           <a routerLink="/signup">Create an account</a>
         </div>
+
       </div>
 
-      <!-- Phone login form -->
+      <!-- BACK BUTTON -->
+      <button
+        *ngIf="selectedMethod"
+        type="button"
+        class="back-button"
+        (click)="goBack()">
+
+        <span>←</span>
+        Back to all options
+
+      </button>
+
+      <!-- PHONE LOGIN -->
       <form
         *ngIf="selectedMethod === 'phone'"
         class="auth-form"
@@ -163,6 +121,7 @@
         <label for="phone">Mobile number</label>
 
         <div class="phone-input">
+
           <span class="country-code">+91</span>
 
           <input
@@ -176,26 +135,39 @@
             maxlength="10"
             pattern="[6-9][0-9]{9}"
             required />
+
         </div>
 
-        <p class="field-hint">
-          We'll verify your number with a one-time password.
-        </p>
+        <label for="phonePassword">Password</label>
+
+        <input
+          id="phonePassword"
+          class="text-input"
+          type="password"
+          name="phonePassword"
+          [(ngModel)]="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required />
 
         <button
           type="submit"
           class="primary-button"
           [disabled]="loading">
-          Continue <span>→</span>
+
+          {{ loading ? 'Signing in...' : 'Sign in' }}
+          <span>→</span>
+
         </button>
 
         <div class="signup-prompt">
           New to Tourism India?
           <a routerLink="/signup">Create an account</a>
         </div>
+
       </form>
 
-      <!-- Email login form -->
+      <!-- EMAIL LOGIN -->
       <form
         *ngIf="selectedMethod === 'email'"
         class="auth-form"
@@ -229,16 +201,20 @@
           type="submit"
           class="primary-button"
           [disabled]="loading">
-          Sign in <span>→</span>
+
+          {{ loading ? 'Signing in...' : 'Sign in' }}
+          <span>→</span>
+
         </button>
 
         <div class="signup-prompt">
           New to Tourism India?
           <a routerLink="/signup">Create an account</a>
         </div>
+
       </form>
 
-      <!-- Google sign-in -->
+      <!-- GOOGLE LOGIN -->
       <div
         *ngIf="selectedMethod === 'google'"
         class="google-info">
@@ -250,33 +226,32 @@
           You won't need to create a separate password for Google sign-in.
         </p>
 
-        <!-- Google Identity Services renders its official button here. -->
         <div id="googleButton"></div>
 
-        <p
-          *ngIf="loading"
-          role="status"
-          aria-live="polite">
+        <p *ngIf="loading" role="status" aria-live="polite">
           Verifying your Google account...
         </p>
+
       </div>
 
-      <!-- Status and error messages -->
+      <!-- NORMAL LOGIN MESSAGE -->
       <div
         *ngIf="message"
         class="status-message"
         role="status"
         aria-live="polite">
+
         {{ message }}
+
       </div>
 
-      <!-- Security note -->
+      <!-- SECURITY -->
       <div class="security-note">
-        <span aria-hidden="true">♧</span>
+        <span>♧</span>
         <span>Your account security matters to us.</span>
       </div>
 
-      <!-- Terms and privacy -->
+      <!-- TERMS -->
       <p class="terms-text">
         By continuing, you agree to our
         <a routerLink="/terms">Terms of Use</a>
@@ -284,6 +259,144 @@
         <a routerLink="/privacy">Privacy Policy</a>.
       </p>
 
+      <!-- ADMIN ENTRY -->
+      <div class="admin-login-link">
+
+        <span>Administrator?</span>
+
+        <button
+          type="button"
+          class="admin-link-button"
+          (click)="openAdminModal()">
+
+          Admin login
+
+        </button>
+
+      </div>
+
     </div>
+
   </section>
+
+  <!-- ================================= -->
+  <!-- ADMIN LOGIN MODAL -->
+  <!-- ================================= -->
+
+  <div
+    class="admin-modal-backdrop"
+    *ngIf="isAdminModalOpen"
+    (click)="closeAdminModal()">
+
+    <div
+      class="admin-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="adminModalTitle"
+      (click)="$event.stopPropagation()">
+
+      <!-- Close -->
+      <button
+        type="button"
+        class="admin-modal-close"
+        aria-label="Close admin login"
+        [disabled]="adminLoading"
+        (click)="closeAdminModal()">
+
+        ×
+
+      </button>
+
+      <!-- Modal heading -->
+      <div class="admin-modal-icon">
+        <span>♙</span>
+      </div>
+
+      <span class="admin-eyebrow">
+        ADMINISTRATION
+      </span>
+
+      <h2 id="adminModalTitle">
+        Admin sign in
+      </h2>
+
+      <p class="admin-modal-description">
+        Sign in with your administrator credentials to manage Tourism India.
+      </p>
+
+      <!-- Admin form -->
+      <form
+        class="auth-form admin-modal-form"
+        (ngSubmit)="submitAdminLogin()">
+
+        <label for="adminIdentifier">
+          Email or phone number
+        </label>
+
+        <input
+          id="adminIdentifier"
+          class="text-input"
+          type="text"
+          name="adminIdentifier"
+          [(ngModel)]="adminIdentifier"
+          placeholder="Enter your registered email or phone"
+          autocomplete="username"
+          required />
+
+        <label for="adminPassword">
+          Password
+        </label>
+
+        <input
+          id="adminPassword"
+          class="text-input"
+          type="password"
+          name="adminPassword"
+          [(ngModel)]="adminPassword"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required />
+
+        <button
+          type="submit"
+          class="primary-button admin-submit-button"
+          [disabled]="adminLoading">
+
+          <span class="admin-submit-text">
+            {{ adminLoading ? 'Verifying credentials...' : 'Admin sign in' }}
+          </span>
+
+          <span>→</span>
+
+        </button>
+
+      </form>
+
+      <!-- Admin message -->
+      <div
+        *ngIf="adminMessage"
+        class="admin-status"
+        [class.admin-error]="adminError"
+        [class.admin-success]="!adminError"
+        role="alert"
+        aria-live="polite">
+
+        <span class="admin-status-icon">
+          {{ adminError ? '!' : '✓' }}
+        </span>
+
+        <span>{{ adminMessage }}</span>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="admin-modal-footer">
+        <span class="admin-security-icon">♧</span>
+        Authorized administrators only.
+      </div>
+
+    </div>
+
+  </div>
+
 </main>

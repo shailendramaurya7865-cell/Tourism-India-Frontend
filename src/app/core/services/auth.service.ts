@@ -1,8 +1,20 @@
 
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+
+import {
+  BehaviorSubject,
+  Observable,
+  of
+} from 'rxjs';
+
+import {
+  catchError,
+  map,
+  switchMap,
+  tap
+} from 'rxjs/operators';
+
 import { environment } from '../../../environments/environments';
 import { CsrfService } from '../../csrf.service';
 
@@ -11,28 +23,33 @@ export interface AuthUser {
   firstName?: string | null;
   lastName?: string | null;
   name?: string | null;
+  username?: string | null;
   email: string;
+  phone?: string | null;
   profileImgUrl?: string | null;
   picture?: string | null;
-  role?: string;
+  role?: string | null;
 }
 
-export interface GoogleLoginResponse {
+export interface LoginResponse {
   success?: boolean;
   message?: string;
   user?: AuthUser;
-  [key: string]: unknown;
 }
 
+export interface GoogleLoginResponse extends LoginResponse {}
+
 interface SessionResponse {
+  success?: boolean;
   user?: AuthUser | null;
-  [key: string]: unknown;
+  message?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+
   private readonly http = inject(HttpClient);
   private readonly csrfService = inject(CsrfService);
 
@@ -45,74 +62,139 @@ export class AuthService {
   readonly currentUser$ =
     this.currentUserSubject.asObservable();
 
+  /**
+   * Current authenticated user.
+   */
   get currentUser(): AuthUser | null {
     return this.currentUserSubject.value;
   }
 
+  /**
+   * Update authenticated user.
+   */
   setCurrentUser(user: AuthUser): void {
     this.currentUserSubject.next(user);
   }
 
+  /**
+   * Clear authenticated user.
+   */
   clearCurrentUser(): void {
     this.currentUserSubject.next(null);
   }
 
   /**
-   * Restore the current user's session after a page refresh.
+   * Restore the server-side session after page refresh.
+   *
+   * Backend:
+   * GET /auth/me
    */
-
   restoreSession(): Observable<AuthUser | null> {
-    return this.http
-      .get<AuthUser | { user: AuthUser | null }>(
-        `${this.apiUrl}/me`,
-        { withCredentials: true }
-      )
-      .pipe(
-        map((response): AuthUser | null => {
-          if ('user' in response) {
-            return response.user ?? null;
-          }
 
-          return response;
-        }),
+    return this.http.get<SessionResponse>(
+      `${this.apiUrl}/me`,
+      {
+        withCredentials: true
+      }
+    ).pipe(
 
-        tap((user: AuthUser | null) => {
-          if (user) {
-            this.setCurrentUser(user);
-          } else {
-            this.clearCurrentUser();
-          }
-        }),
+      map(response => response.user ?? null),
 
-        catchError(error => {
+      tap(user => {
+        if (user) {
+          this.setCurrentUser(user);
+        } else {
           this.clearCurrentUser();
+        }
+      }),
 
-          if (error?.status === 401 || error?.status === 403) {
-            return of(null);
-          }
+      catchError(error => {
 
-          console.error('Session restoration failed:', error);
-          return of(null);
-        })
-      );
+        this.clearCurrentUser();
+
+        if (
+          error?.status !== 401 &&
+          error?.status !== 403
+        ) {
+          console.error(
+            'Session restoration failed:',
+            error
+          );
+        }
+
+        return of(null);
+      })
+    );
   }
 
-
   /**
-   * Initialize CSRF, perform Google login, then refresh CSRF
-   * because authentication can change the session.
+   * Login using email or phone and password.
+   *
+   * Backend:
+   * POST /auth/login
    */
-  loginWithGoogle(idToken: string): Observable<GoogleLoginResponse> {
+  loginWithPassword(
+    identifier: string,
+    password: string
+  ): Observable<LoginResponse> {
+
     return this.csrfService.initialize().pipe(
+
       switchMap(() =>
-        this.http.post<GoogleLoginResponse>(
-          `${this.apiUrl}/google`,
-          { idToken },
-          { withCredentials: true }
+        this.http.post<LoginResponse>(
+          `${this.apiUrl}/login`,
+          {
+            identifier: identifier.trim(),
+            password
+          },
+          {
+            withCredentials: true
+          }
         )
       ),
 
       switchMap(response => {
+
+        if (!response?.success || !response.user) {
+          return of(response);
+        }
+
+        this.setCurrentUser(response.user);
+
+        // Refresh CSRF token for the authenticated session.
+        return this.csrfService.refresh().pipe(
+          map(() => response)
+        );
+      })
+    );
+  }
+
+  /**
+   * Google authentication.
+   *
+   * Backend:
+   * POST /auth/google
+   */
+  loginWithGoogle(
+    idToken: string
+  ): Observable<GoogleLoginResponse> {
+
+    return this.csrfService.initialize().pipe(
+
+      switchMap(() =>
+        this.http.post<GoogleLoginResponse>(
+          `${this.apiUrl}/google`,
+          {
+            idToken
+          },
+          {
+            withCredentials: true
+          }
+        )
+      ),
+
+      switchMap(response => {
+
         if (!response?.success || !response.user) {
           return of(response);
         }
@@ -127,16 +209,22 @@ export class AuthService {
   }
 
   /**
-   * Refresh CSRF before logout, send the logout POST,
-   * clear local auth state, then obtain a fresh anonymous token.
+   * Logout and invalidate the server-side session.
+   *
+   * Backend:
+   * POST /auth/logout
    */
   logout(): Observable<void> {
+
     return this.csrfService.refresh().pipe(
+
       switchMap(() =>
         this.http.post<void>(
           `${this.apiUrl}/logout`,
           {},
-          { withCredentials: true }
+          {
+            withCredentials: true
+          }
         )
       ),
 
@@ -144,7 +232,10 @@ export class AuthService {
         this.clearCurrentUser();
       }),
 
-      switchMap(() => this.csrfService.refresh())
+      // Obtain a fresh CSRF token for the anonymous session.
+      switchMap(() =>
+        this.csrfService.refresh()
+      )
     );
   }
 }

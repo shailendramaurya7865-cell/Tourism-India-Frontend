@@ -1,5 +1,5 @@
-
 import { Routes } from '@angular/router';
+import { adminAuthGuard } from './core/guards/admin-auth.guard';
 
 export const routes: Routes = [
   {
@@ -46,8 +46,6 @@ export const routes: Routes = [
       import('./features/tourist-place-detail/tourist-place-detail.component')
         .then(m => m.TouristPlaceDetailComponent)
   },
-
-  // Category exploration page
   {
     path: 'explore-category/:slug',
     loadComponent: () =>
@@ -55,11 +53,21 @@ export const routes: Routes = [
         .then(m => m.ExploreCategoryComponent)
   },
 
-   {
+  // Normal user login
+  {
     path: 'login',
     loadComponent: () =>
       import('./features/login/login.component')
         .then(m => m.LoginComponent)
+  },
+
+  // Protected admin interface
+  {
+    path: 'admin/dashboard',
+    canActivate: [adminAuthGuard],
+    loadComponent: () =>
+      import('./features/admin/dashboard/admin-dashboard.component')
+        .then(m => m.AdminDashboardComponent)
   },
 
   {

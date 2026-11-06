@@ -1,0 +1,278 @@
+
+:host {
+  display: block;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #173d2b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f7f6;
+}
+
+/* Sidebar */
+
+.admin-sidebar {
+  width: 235px;
+  min-width: 235px;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 13px;
+  background: #fff;
+  border-right: 1px solid #e4ebe7;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px 24px;
+  border-bottom: 1px solid #edf1ef;
+  margin-bottom: 15px;
+}
+
+.brand-logo {
+  font-size: 27px;
+}
+
+.sidebar-brand h2 {
+  margin: 0 0 3px;
+  font-size: 17px;
+  color: #173d2b;
+}
+
+.sidebar-brand span {
+  font-size: 12px;
+  color: #718178;
+}
+
+.sidebar-nav {
+  flex: 1;
+}
+
+.nav-heading {
+  margin: 20px 8px 8px;
+  color: #7c8d84;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .4px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 3px;
+  border-radius: 7px;
+  color: #294c3b;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.nav-link:hover {
+  background: #edf4ef;
+}
+
+.nav-link.active {
+  background: #173d2b;
+  color: white;
+  font-weight: 600;
+}
+
+.nav-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.visit-website {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  margin-top: 20px;
+  border-radius: 7px;
+  background: #e8f0eb;
+  color: #173d2b;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Main area */
+
+.admin-content {
+  flex: 1;
+  min-width: 0;
+  margin-left: 235px;
+}
+
+/* Topbar */
+
+.topbar {
+  height: 57px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  background: white;
+  border-bottom: 1px solid #e5ebe7;
+}
+
+.topbar-search {
+  width: min(570px, 65%);
+  height: 37px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 13px;
+  background: #f2f5f4;
+  border: 1px solid #e5ebe7;
+  border-radius: 7px;
+}
+
+.topbar-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.notification-btn {
+  position: relative;
+  border: none;
+  background: transparent;
+  color: #173d2b;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.notification-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #dc594b;
+  color: white;
+  font-size: 10px;
+}
+
+.admin-profile {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-left: 18px;
+  border-left: 1px solid #e5ebe7;
+}
+
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #dce9e0;
+  font-weight: 700;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profile-info strong {
+  font-size: 12px;
+}
+
+.profile-info span {
+  font-size: 11px;
+  color: #829188;
+}
+
+.profile-arrow {
+  margin-left: 12px;
+}
+
+/* Child page container */
+
+.admin-page-container {
+  padding: 18px 20px;
+  min-height: calc(100vh - 57px);
+}
+
+/* Responsive */
+
+@media (max-width: 850px) {
+  .admin-sidebar {
+    width: 70px;
+    min-width: 70px;
+    padding: 15px 8px;
+  }
+
+  .sidebar-brand {
+    justify-content: center;
+    padding: 0 0 20px;
+  }
+
+  .sidebar-brand > div:last-child,
+  .nav-heading,
+  .nav-link > span:last-child,
+  .visit-website {
+    display: none;
+  }
+
+  .nav-link {
+    justify-content: center;
+    padding: 12px 5px;
+  }
+
+  .admin-content {
+    margin-left: 70px;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    padding: 0 12px;
+  }
+
+  .profile-info,
+  .profile-arrow {
+    display: none;
+  }
+
+  .topbar-search {
+    width: 55%;
+  }
+
+  .admin-page-container {
+    padding: 12px;
+  }
+}

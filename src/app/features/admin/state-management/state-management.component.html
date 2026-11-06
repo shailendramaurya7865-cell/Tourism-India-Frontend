@@ -1,0 +1,333 @@
+<div class="state-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <span class="breadcrumb">Admin / Destinations / States</span>
+      <h1>State Management</h1>
+      <p>Manage states, descriptions, images and visibility across Tourism India.</p>
+    </div>
+
+    <button class="btn-primary" (click)="openAddForm()">
+      <span class="plus-icon">+</span>
+      Add New State
+    </button>
+  </div>
+
+  <!-- Notifications -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    {{ successMessage }}
+    <button (click)="successMessage = ''">×</button>
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage && !showForm">
+    {{ errorMessage }}
+    <button (click)="errorMessage = ''">×</button>
+  </div>
+
+  <!-- Statistics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon total-icon">▦</div>
+      <div>
+        <span>Total States</span>
+        <h2>{{ states.length }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon active-icon">✓</div>
+      <div>
+        <span>Active States</span>
+        <h2>{{ activeCount }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon featured-icon">★</div>
+      <div>
+        <span>Featured States</span>
+        <h2>{{ featuredCount }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon inactive-icon">○</div>
+      <div>
+        <span>Inactive States</span>
+        <h2>{{ inactiveCount }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- State Table -->
+  <section class="content-card">
+
+    <div class="table-header">
+      <div>
+        <h2>All States</h2>
+        <p>View and manage all registered states.</p>
+      </div>
+
+      <div class="search-box">
+        <span>⌕</span>
+        <input
+          type="text"
+          placeholder="Search by name or code..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applySearch()"
+        />
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      Loading states...
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && filteredStates.length === 0">
+      <div class="empty-icon">▦</div>
+      <h3>No states found</h3>
+      <p>
+        {{ searchTerm ? 'Try another search term.' : 'Start by adding your first state.' }}
+      </p>
+
+      <button
+        *ngIf="!searchTerm"
+        class="btn-primary"
+        (click)="openAddForm()">
+        Add State
+      </button>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!loading && filteredStates.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>STATE</th>
+            <th>CODE</th>
+            <th>SLUG</th>
+            <th>FEATURED</th>
+            <th>STATUS</th>
+            <th class="action-heading">ACTIONS</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let state of filteredStates">
+            <td>
+              <div class="state-info">
+                <img
+                  *ngIf="state.imageUrl"
+                  [src]="state.imageUrl"
+                  [alt]="state.name"
+                  class="state-image"
+                />
+
+                <div *ngIf="!state.imageUrl" class="state-placeholder">
+                  {{ state.name.charAt(0) }}
+                </div>
+
+                <div>
+                  <strong>{{ state.name }}</strong>
+                  <small>{{ state.tagline || 'No tagline added' }}</small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="code-badge">{{ state.code }}</span>
+            </td>
+
+            <td class="slug-text">{{ state.slug || '—' }}</td>
+
+            <td>
+              <span
+                class="featured-badge"
+                [class.not-featured]="!state.isFeatured">
+                {{ state.isFeatured ? '★ Featured' : 'Not featured' }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="state.isActive"
+                [class.inactive]="!state.isActive">
+                <span class="status-dot"></span>
+                {{ state.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="action-btn edit-btn"
+                  title="Edit state"
+                  (click)="openEditForm(state)">
+                  ✎
+                </button>
+
+                <button
+                  class="action-btn toggle-btn"
+                  [title]="state.isActive ? 'Deactivate state' : 'Activate state'"
+                  (click)="toggleActive(state)">
+                  {{ state.isActive ? '◉' : '○' }}
+                </button>
+
+                <button
+                  class="action-btn delete-btn"
+                  title="Delete state"
+                  (click)="deleteState(state)">
+                  🗑
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer" *ngIf="!loading && filteredStates.length > 0">
+      Showing {{ filteredStates.length }} of {{ states.length }} states
+    </div>
+
+  </section>
+</div>
+
+
+<!-- ADD / EDIT STATE MODAL -->
+<div class="modal-backdrop" *ngIf="showForm" (click)="closeForm()">
+
+  <div class="state-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h2>{{ editingState ? 'Edit State' : 'Add New State' }}</h2>
+        <p>
+          {{ editingState ? 'Update the state information below.' : 'Enter the details to add a new state.' }}
+        </p>
+      </div>
+
+      <button class="close-btn" (click)="closeForm()">×</button>
+    </div>
+
+    <form [formGroup]="stateForm" (ngSubmit)="saveState()">
+
+      <div class="modal-body">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>State Name <span>*</span></label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="e.g. Rajasthan"
+            />
+
+            <small class="validation-error"
+              *ngIf="nameControl.touched && nameControl.invalid">
+              State name is required (maximum 255 characters).
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>State Code <span>*</span></label>
+            <input
+              type="text"
+              formControlName="code"
+              placeholder="e.g. RJ"
+            />
+
+            <small class="validation-error"
+              *ngIf="codeControl.touched && codeControl.invalid">
+              State code is required (maximum 255 characters).
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>Slug</label>
+            <input
+              type="text"
+              formControlName="slug"
+              placeholder="e.g. rajasthan"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Tagline</label>
+            <input
+              type="text"
+              formControlName="tagline"
+              placeholder="e.g. The Land of Kings"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label>Image URL</label>
+            <input
+              type="url"
+              formControlName="imageUrl"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea
+              rows="4"
+              formControlName="description"
+              placeholder="Write a short description about this state...">
+            </textarea>
+          </div>
+
+        </div>
+
+        <div class="settings-section">
+          <h3>Publishing Settings</h3>
+
+          <label class="switch-row">
+            <div>
+              <strong>Active State</strong>
+              <small>Make this state visible on the public website.</small>
+            </div>
+            <input type="checkbox" formControlName="isActive" />
+            <span class="switch"></span>
+          </label>
+
+          <label class="switch-row">
+            <div>
+              <strong>Featured State</strong>
+              <small>Highlight this state in featured destinations.</small>
+            </div>
+            <input type="checkbox" formControlName="isFeatured" />
+            <span class="switch"></span>
+          </label>
+        </div>
+
+        <div class="alert alert-error" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="saving"
+          (click)="closeForm()">
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="saving">
+          {{ saving ? 'Saving...' : (editingState ? 'Update State' : 'Create State') }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

@@ -1,28 +1,461 @@
-<div class="admin-layout">
+    <!-- Dashboard Body -->
+    <div class="dashboard-container">
 
-  <aside class="admin-sidebar">
-    <h2>Tourism India</h2>
+      <!-- Page Heading -->
+      <div class="page-heading">
 
-    <nav>
-      <a class="active">Dashboard</a>
-      <a>States</a>
-      <a>Cities</a>
-      <a>Tourist Places</a>
-      <a>Categories</a>
-      <a>Users</a>
-    </nav>
-  </aside>
+        <div>
+          <h1>Dashboard</h1>
+          <p>Manage your Tourism India content, users and explore insights</p>
+        </div>
 
-  <main class="admin-content">
-    <header class="admin-header">
-      <h1>Admin Dashboard</h1>
-      <span>Administrator</span>
-    </header>
+        <button class="date-filter">
+          ▣ &nbsp; 01 Apr 2024 – 30 Apr 2024 &nbsp;⌄
+        </button>
 
-    <section class="dashboard-welcome">
-      <h2>Welcome to Tourism India Admin</h2>
-      <p>Manage states, cities, tourist places, categories and users.</p>
-    </section>
-  </main>
+      </div>
 
-</div>
+
+      <!-- Statistics -->
+      <section class="stats-grid">
+
+        <div class="stat-card" *ngFor="let stat of stats">
+
+          <div class="stat-icon" [ngClass]="stat.color">
+
+            <ng-container [ngSwitch]="stat.icon">
+              <span *ngSwitchCase="'map'">♧</span>
+              <span *ngSwitchCase="'city'">▥</span>
+              <span *ngSwitchCase="'location'">●</span>
+              <span *ngSwitchCase="'users'">♟</span>
+              <span *ngSwitchCase="'star'">★</span>
+            </ng-container>
+
+          </div>
+
+          <div class="stat-details">
+            <span class="stat-title">{{ stat.title }}</span>
+            <h2>{{ stat.value }}</h2>
+            <span class="stat-change">↑ {{ stat.change }}</span>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- Analytics Section -->
+      <section class="analytics-grid">
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+
+          <div class="welcome-overlay">
+            <h2>Welcome Admin!</h2>
+            <p>
+              Let's keep showcasing the incredible
+              beauty of India to the world.
+            </p>
+
+            <h3>“Not just a place, but a feeling.”</h3>
+            <span>Incredible India</span>
+          </div>
+
+        </div>
+
+
+        <!-- Website Visitors -->
+        <div class="dashboard-card visitor-card">
+
+          <div class="card-header">
+            <h3>Website Visitors</h3>
+
+            <span class="period-label">{{ selectedPeriod }} ⌄</span>
+          </div>
+
+          <div class="visitor-chart">
+
+            <div class="chart-y-labels">
+              <span>40K</span>
+              <span>30K</span>
+              <span>20K</span>
+              <span>10K</span>
+              <span>0</span>
+            </div>
+
+            <div class="chart-content">
+
+              <svg viewBox="0 0 500 155" preserveAspectRatio="none">
+
+                <defs>
+                  <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#2d6145" stop-opacity=".35"/>
+                    <stop offset="100%" stop-color="#2d6145" stop-opacity=".02"/>
+                  </linearGradient>
+                </defs>
+
+                <line x1="0" y1="10" x2="500" y2="10" class="chart-grid"/>
+                <line x1="0" y1="45" x2="500" y2="45" class="chart-grid"/>
+                <line x1="0" y1="80" x2="500" y2="80" class="chart-grid"/>
+                <line x1="0" y1="115" x2="500" y2="115" class="chart-grid"/>
+                <line x1="0" y1="150" x2="500" y2="150" class="chart-grid"/>
+
+                <path
+                  d="M0,125 L35,123 L70,120 L105,100 L140,90 L175,105 L210,85 L245,75 L280,82 L315,65 L350,73 L385,48 L420,35 L455,43 L500,15 L500,150 L0,150 Z"
+                  fill="url(#visitorGradient)"
+                />
+
+                <polyline
+                  points="0,125 35,123 70,120 105,100 140,90 175,105 210,85 245,75 280,82 315,65 350,73 385,48 420,35 455,43 500,15"
+                  class="chart-line"
+                />
+
+                <g class="chart-points">
+                  <circle cx="0" cy="125" r="3"/>
+                  <circle cx="70" cy="120" r="3"/>
+                  <circle cx="140" cy="90" r="3"/>
+                  <circle cx="210" cy="85" r="3"/>
+                  <circle cx="280" cy="82" r="3"/>
+                  <circle cx="350" cy="73" r="3"/>
+                  <circle cx="420" cy="35" r="3"/>
+                  <circle cx="500" cy="15" r="3"/>
+                </g>
+
+              </svg>
+
+              <div class="chart-x-labels">
+                <span>Apr 1</span>
+                <span>Apr 7</span>
+                <span>Apr 14</span>
+                <span>Apr 21</span>
+                <span>Apr 30</span>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="visitor-summary">
+
+            <div>
+              <strong>◉ &nbsp;254,320</strong>
+              <span>Page Views</span>
+              <small>↑ 18%</small>
+            </div>
+
+            <div>
+              <strong>♟ &nbsp;86,421</strong>
+              <span>Unique Visitors</span>
+              <small>↑ 12%</small>
+            </div>
+
+            <div>
+              <strong>◷ &nbsp;3m 24s</strong>
+              <span>Avg. Session</span>
+              <small>↑ 6%</small>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Visitors by Region -->
+        <div class="dashboard-card region-card">
+
+          <div class="card-header">
+            <h3>Visitors by Region</h3>
+          </div>
+
+          <div class="region-content">
+
+            <div class="india-map">
+              <div class="map-shape">INDIA</div>
+            </div>
+
+            <div class="region-list">
+              <div class="region-item" *ngFor="let region of regions">
+                <span class="region-dot"></span>
+                <span class="region-name">{{ region.name }}</span>
+                <strong>{{ region.percentage }}%</strong>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- Destinations, Popular and Approvals -->
+      <section class="content-grid">
+
+        <!-- Recent Destinations -->
+        <div class="dashboard-card recent-card">
+
+          <div class="card-header">
+            <h3>Recent Destinations Added</h3>
+            <a href="#">View All →</a>
+          </div>
+
+          <div class="destination-grid">
+
+            <div class="destination-card" *ngFor="let place of recentDestinations">
+
+              <img [src]="place.image" [alt]="place.name"/>
+
+              <div class="destination-info">
+                <strong>{{ place.name }}</strong>
+                <span>{{ place.location }}</span>
+
+                <div class="destination-meta">
+                  <span class="published-dot"></span>
+                  <span class="published-text">{{ place.status }}</span>
+                  <small>{{ place.added }}</small>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Top Viewed Destinations -->
+        <div class="dashboard-card top-destinations-card">
+
+          <div class="card-header">
+            <h3>Top Viewed Destinations</h3>
+            <a href="#">View All →</a>
+          </div>
+
+          <div class="top-destination-list">
+
+            <div
+              class="top-destination-item"
+              *ngFor="let place of topDestinations; let i = index"
+            >
+
+              <span class="rank">{{ i + 1 }}</span>
+
+              <div class="destination-placeholder">
+                {{ place.name.charAt(0) }}
+              </div>
+
+              <div class="top-destination-info">
+                <strong>{{ place.name }}</strong>
+                <span>{{ place.location }}</span>
+              </div>
+
+              <span class="view-count">{{ place.views }} views</span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Approval Queue -->
+        <div class="dashboard-card approval-card">
+
+          <div class="card-header">
+            <h3>Content Approval Queue</h3>
+            <a href="#">View All →</a>
+          </div>
+
+          <div class="approval-list">
+
+            <div class="approval-item" *ngFor="let item of approvalQueue">
+
+              <div class="approval-thumbnail">
+                {{ item.type === 'Blog Post' ? '▤' : '⌖' }}
+              </div>
+
+              <div class="approval-info">
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.type }}</span>
+              </div>
+
+              <small>{{ item.time }}</small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- User and Content Management -->
+      <section class="management-grid">
+
+        <!-- User Management -->
+        <div class="dashboard-card management-card">
+
+          <div class="card-header">
+            <h3>User Management</h3>
+
+            <div class="header-actions">
+              <a href="#">View All →</a>
+              <button class="add-button">+ Add User</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr *ngFor="let user of users">
+
+                  <td>
+                    <div class="user-name">
+                      <div class="user-avatar">{{ user.initials }}</div>
+                      <strong>{{ user.name }}</strong>
+                    </div>
+                  </td>
+
+                  <td>{{ user.email }}</td>
+
+                  <td>
+                    <span class="role-badge">{{ user.role }}</span>
+                  </td>
+
+                  <td>
+                    <span
+                      class="status-badge"
+                      [class.inactive]="user.status === 'Inactive'"
+                    >
+                      {{ user.status }}
+                    </span>
+                  </td>
+
+                  <td class="table-actions">✎ &nbsp; ⋮</td>
+
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <!-- Content Management -->
+        <div class="dashboard-card management-card">
+
+          <div class="card-header">
+            <h3>Manage Content</h3>
+
+            <div class="header-actions">
+              <a href="#">View All →</a>
+              <button class="add-button">+ Add New</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr *ngFor="let content of contents">
+
+                  <td><strong>{{ content.title }}</strong></td>
+
+                  <td>
+                    <span class="role-badge">{{ content.type }}</span>
+                  </td>
+
+                  <td>{{ content.location }}</td>
+
+                  <td>
+                    <span
+                      class="status-badge"
+                      [class.draft]="content.status === 'Draft'"
+                    >
+                      {{ content.status }}
+                    </span>
+                  </td>
+
+                  <td class="table-actions">✎ &nbsp; ⋮</td>
+
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <!-- Quick Actions -->
+        <div class="dashboard-card quick-actions-card">
+
+          <div class="card-header">
+            <h3>Quick Actions</h3>
+          </div>
+
+          <div class="quick-action-list">
+
+            <button *ngFor="let action of quickActions">
+
+              <span class="quick-action-icon">
+                <ng-container [ngSwitch]="action.icon">
+                  <span *ngSwitchCase="'location'">♦</span>
+                  <span *ngSwitchCase="'city'">▥</span>
+                  <span *ngSwitchCase="'map'">♧</span>
+                  <span *ngSwitchCase="'image'">▧</span>
+                  <span *ngSwitchCase="'star'">★</span>
+                  <span *ngSwitchCase="'calendar'">▣</span>
+                  <span *ngSwitchCase="'document'">▤</span>
+                </ng-container>
+              </span>
+
+              <span>{{ action.label }}</span>
+              <span class="action-arrow">→</span>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- Footer -->
+      <footer class="dashboard-footer">
+        <span>© 2024 Tourism India. All rights reserved.</span>
+
+        <div>
+          <strong>Incredible India</strong>
+          <span class="footer-india-flag">🟧 🟩</span>
+          <a href="/">Explore</a>
+          <a href="#">Manage</a>
+          <a href="#">Grow</a>
+        </div>
+      </footer>
+
+    </div>

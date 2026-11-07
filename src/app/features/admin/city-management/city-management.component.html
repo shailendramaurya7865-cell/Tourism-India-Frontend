@@ -1,0 +1,511 @@
+
+<div class="city-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <span class="breadcrumb">Admin / Destinations / Cities</span>
+      <h1>City Management</h1>
+      <p>Manage cities, descriptions, images and visibility across Tourism India.</p>
+    </div>
+
+    <button
+      class="btn-primary"
+      (click)="openAddForm()"
+      [disabled]="detailLoading || saving">
+      <span class="plus-icon">+</span>
+      Add New City
+    </button>
+  </div>
+
+  <!-- Notifications -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    {{ successMessage }}
+    <button type="button" (click)="successMessage = ''">×</button>
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage && !showForm">
+    {{ errorMessage }}
+    <button type="button" (click)="errorMessage = ''">×</button>
+  </div>
+
+  <!-- Statistics -->
+  <div class="stats-grid">
+
+    <div class="stat-card">
+      <div class="stat-icon total-icon">▦</div>
+      <div>
+        <span>Total Cities</span>
+        <h2>{{ totalCount }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon active-icon">✓</div>
+      <div>
+        <span>Active Cities</span>
+        <h2>{{ activeCount }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon featured-icon">★</div>
+      <div>
+        <span>Featured Cities</span>
+        <h2>{{ featuredCount }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon inactive-icon">○</div>
+      <div>
+        <span>Inactive Cities</span>
+        <h2>{{ inactiveCount }}</h2>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- City Table -->
+  <section class="content-card">
+
+    <div class="table-header">
+      <div>
+        <h2>All Cities</h2>
+        <p>View and manage all registered cities.</p>
+      </div>
+
+      <div class="search-box">
+        <span>⌕</span>
+        <input
+          type="text"
+          placeholder="Search by city name, tagline or state..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applySearch()"
+        />
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="loading">
+      Loading cities...
+    </div>
+
+    <!-- Empty State -->
+    <div
+      class="empty-state"
+      *ngIf="!loading && filteredCities.length === 0">
+
+      <div class="empty-icon">▦</div>
+
+      <h3>No cities found</h3>
+
+      <p>
+        {{ searchTerm
+          ? 'Try another search term.'
+          : 'Start by adding your first city.' }}
+      </p>
+
+      <button
+        *ngIf="!searchTerm"
+        class="btn-primary"
+        (click)="openAddForm()">
+        Add City
+      </button>
+
+    </div>
+
+    <!-- Table -->
+    <div
+      class="table-wrapper"
+      *ngIf="!loading && filteredCities.length > 0">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>CITY</th>
+            <th>STATE</th>
+            <th>FEATURED</th>
+            <th>STATUS</th>
+            <th>CREATED ON</th>
+            <th class="action-heading">ACTIONS</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr *ngFor="let city of filteredCities">
+
+            <!-- City Information -->
+            <td>
+              <div class="state-info">
+
+                <img
+                  *ngIf="city.imageUrl"
+                  [src]="city.imageUrl"
+                  [alt]="city.name"
+                  class="state-image"
+                />
+
+                <div
+                  *ngIf="!city.imageUrl"
+                  class="state-placeholder">
+                  {{ city.name.charAt(0) }}
+                </div>
+
+                <div>
+                  <strong>{{ city.name }}</strong>
+                  <small>{{ city.tagline || 'No tagline added' }}</small>
+                </div>
+
+              </div>
+            </td>
+
+            <!-- State Information -->
+            <td>
+              <div class="state-column">
+                <strong>{{ city.stateName }}</strong>
+                <small>{{ city.stateCode || '' }}</small>
+              </div>
+            </td>
+
+            <!-- Featured -->
+            <td>
+              <span
+                class="featured-badge"
+                [class.not-featured]="!city.isFeatured">
+                {{ city.isFeatured ? '★ Featured' : 'Not featured' }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="city.isActive"
+                [class.inactive]="!city.isActive">
+
+                <span class="status-dot"></span>
+
+                {{ city.isActive ? 'Active' : 'Inactive' }}
+
+              </span>
+            </td>
+
+            <!-- Created Date -->
+            <td>
+              {{ city.createdAt | date:'dd MMM yyyy' }}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="action-buttons">
+
+                <button
+                  type="button"
+                  class="action-btn edit-btn"
+                  title="Edit city"
+                  [disabled]="detailLoading || saving"
+                  (click)="openEditForm(city)">
+                  ✎
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn toggle-btn"
+                  [title]="city.isActive ? 'Deactivate city' : 'Activate city'"
+                  [disabled]="detailLoading || saving"
+                  (click)="toggleActive(city)">
+                  {{ city.isActive ? '◉' : '○' }}
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn delete-btn"
+                  title="Delete city"
+                  [disabled]="detailLoading || saving"
+                  (click)="deleteCity(city)">
+                  🗑
+                </button>
+
+              </div>
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- Table Footer -->
+    <div
+      class="table-footer"
+      *ngIf="!loading && filteredCities.length > 0">
+
+      Showing {{ filteredCities.length }} of {{ cities.length }} cities
+
+    </div>
+
+  </section>
+
+</div>
+
+
+<!-- ADD / EDIT CITY MODAL -->
+<div
+  class="modal-backdrop"
+  *ngIf="showForm || detailLoading"
+  (click)="closeForm()">
+
+  <div
+    class="state-modal"
+    (click)="$event.stopPropagation()">
+
+    <!-- Loading City Details -->
+    <div
+      class="loading-state"
+      *ngIf="detailLoading && !showForm">
+
+      Loading city details...
+
+    </div>
+
+    <!-- Form -->
+    <ng-container *ngIf="showForm">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+
+        <div>
+          <h2>{{ editingCity ? 'Edit City' : 'Add New City' }}</h2>
+
+          <p>
+            {{ editingCity
+              ? 'Update the city information below.'
+              : 'Enter the details to add a new city.' }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="close-btn"
+          [disabled]="saving"
+          (click)="closeForm()">
+          ×
+        </button>
+
+      </div>
+
+      <form
+        [formGroup]="cityForm"
+        (ngSubmit)="saveCity()">
+
+        <div class="modal-body">
+
+          <div class="form-grid">
+
+            <!-- City Name -->
+            <div class="form-group">
+
+              <label>City Name <span>*</span></label>
+
+              <input
+                type="text"
+                formControlName="name"
+                placeholder="e.g. Jaipur"
+              />
+
+              <small
+                class="validation-error"
+                *ngIf="nameControl.touched && nameControl.invalid">
+
+                City name is required (maximum 255 characters).
+
+              </small>
+
+            </div>
+
+            <!-- City Code -->
+            <div class="form-group">
+
+              <label>City Code</label>
+
+              <input
+                type="text"
+                formControlName="code"
+                placeholder="e.g. JAI"
+              />
+
+              <small
+                class="validation-error"
+                *ngIf="codeControl.touched && codeControl.invalid">
+
+                Maximum 20 characters allowed.
+
+              </small>
+
+            </div>
+
+            <!-- State Selection -->
+            <div class="form-group full-width">
+
+              <label>Select State <span>*</span></label>
+
+              <select formControlName="stateId">
+
+                <option value="" disabled>Select a state</option>
+
+                <option
+                  *ngFor="let state of states"
+                  [value]="state.id">
+
+                  {{ state.name }}
+
+                </option>
+
+              </select>
+
+              <small
+                class="validation-error"
+                *ngIf="stateIdControl.touched && stateIdControl.invalid">
+
+                Please select a state for this city.
+
+              </small>
+
+            </div>
+
+            <!-- Slug -->
+            <div class="form-group">
+
+              <label>Slug</label>
+
+              <input
+                type="text"
+                formControlName="slug"
+                placeholder="e.g. jaipur"
+              />
+
+            </div>
+
+            <!-- Tagline -->
+            <div class="form-group">
+
+              <label>Tagline</label>
+
+              <input
+                type="text"
+                formControlName="tagline"
+                placeholder="e.g. The Pink City"
+              />
+
+            </div>
+
+            <!-- Image URL -->
+            <div class="form-group full-width">
+
+              <label>Image URL</label>
+
+              <input
+                type="url"
+                formControlName="imageUrl"
+                placeholder="https://example.com/image.jpg"
+              />
+
+            </div>
+
+            <!-- Description -->
+            <div class="form-group full-width">
+
+              <label>Description</label>
+
+              <textarea
+                rows="4"
+                formControlName="description"
+                placeholder="Write a short description about this city...">
+              </textarea>
+
+            </div>
+
+          </div>
+
+          <!-- Publishing Settings -->
+          <div class="settings-section">
+
+            <h3>Publishing Settings</h3>
+
+            <label class="switch-row">
+
+              <div>
+                <strong>Active City</strong>
+                <small>Make this city visible on the public website.</small>
+              </div>
+
+              <input
+                type="checkbox"
+                formControlName="isActive"
+              />
+
+              <span class="switch"></span>
+
+            </label>
+
+            <label class="switch-row">
+
+              <div>
+                <strong>Featured City</strong>
+                <small>Highlight this city in featured destinations.</small>
+              </div>
+
+              <input
+                type="checkbox"
+                formControlName="isFeatured"
+              />
+
+              <span class="switch"></span>
+
+            </label>
+
+          </div>
+
+          <!-- Form Error -->
+          <div class="alert alert-error" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+
+          <button
+            type="button"
+            class="btn-secondary"
+            [disabled]="saving"
+            (click)="closeForm()">
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="saving">
+
+            {{ saving
+              ? 'Saving...'
+              : (editingCity ? 'Update City' : 'Create City') }}
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </ng-container>
+
+  </div>
+
+</div>

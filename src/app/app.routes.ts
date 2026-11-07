@@ -102,6 +102,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/state-management/state-management.component')
             .then(m => m.StateManagementComponent)
+      },
+      {
+        path: 'cities',
+        loadComponent: () =>
+          import('./features/admin/city-management/city-management.component')
+            .then(m => m.CityManagementComponent)
       }
 
       // Add other admin child routes when their components are ready.

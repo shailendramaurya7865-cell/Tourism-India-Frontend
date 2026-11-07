@@ -1,6 +1,12 @@
+import {
+  Component,
+  OnInit,
+  ChangeDetectorRef,
+  inject
+} from '@angular/core';
 
-import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -9,7 +15,13 @@ import {
 } from '@angular/forms';
 
 import { StateService } from '../../../core/services/state.services';
-import { State, StateStats } from '../../../core/models/state.model';
+
+import {
+  AdminState,
+  AdminStateDetail,
+  StateStats,
+  StateRequest
+} from '../../../features/admin/models/admin-state.model';
 
 @Component({
   selector: 'app-state-management',
@@ -22,9 +34,10 @@ export class StateManagementComponent implements OnInit {
 
   private readonly stateService = inject(StateService);
   private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  states: State[] = [];
-  filteredStates: State[] = [];
+  states: AdminState[] = [];
+  filteredStates: AdminState[] = [];
 
   stats: StateStats = {
     totalStates: 0,
@@ -35,13 +48,17 @@ export class StateManagementComponent implements OnInit {
 
   loading = false;
   saving = false;
+  detailLoading = false;
 
   errorMessage = '';
   successMessage = '';
 
   searchTerm = '';
+
   showForm = false;
-  editingState: State | null = null;
+
+  // Full details are stored here after the detail API call.
+  editingState: AdminStateDetail | null = null;
 
   stateForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -59,50 +76,59 @@ export class StateManagementComponent implements OnInit {
     this.loadStateStats();
   }
 
-  // Load states
+  // ================= LOAD DATA =================
+
   loadStates(): void {
     this.loading = true;
     this.errorMessage = '';
 
-    this.stateService.getStates().subscribe({
+    this.stateService.getAdminStates().subscribe({
       next: (states) => {
-        this.states = states;
+        this.states = states ?? [];
         this.applySearch();
+
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         this.loading = false;
+
         this.errorMessage =
           error.error?.message || 'Unable to load states. Please try again.';
 
-        console.error('Load states failed:', error);
+        console.error('Load admin states failed:', error);
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // Load statistics from API
   loadStateStats(): void {
     this.stateService.getStateStats().subscribe({
       next: (stats) => {
         this.stats = stats;
+
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Load state statistics failed:', error);
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // Search states
+  // ================= SEARCH =================
+
   applySearch(): void {
     const term = this.searchTerm.trim().toLowerCase();
 
     this.filteredStates = this.states.filter(state =>
       state.name.toLowerCase().includes(term) ||
-      (state.slug ?? '').toLowerCase().includes(term)
+      (state.tagline ?? '').toLowerCase().includes(term)
     );
   }
 
-  // Open add form
+  // ================= ADD STATE =================
+
   openAddForm(): void {
     this.editingState = null;
 
@@ -119,35 +145,83 @@ export class StateManagementComponent implements OnInit {
 
     this.clearMessages();
     this.showForm = true;
+
+    this.cdr.detectChanges();
   }
 
-  // Open edit form
-  openEditForm(state: State): void {
-    this.editingState = state;
+  // ================= EDIT STATE =================
 
-    this.stateForm.patchValue({
-      name: state.name,
-      code: state.code,
-      tagline: state.tagline ?? '',
-      description: state.description ?? '',
-      imageUrl: state.imageUrl ?? '',
-    });
+  openEditForm(state: AdminState): void {
+
+    if (this.detailLoading || this.saving) {
+      return;
+    }
 
     this.clearMessages();
-    this.showForm = true;
+
+    this.detailLoading = true;
+    this.showForm = false;
+    this.editingState = null;
+
+    // Clear previous form values while fetching details.
+    this.stateForm.reset();
+
+    this.stateService.getAdminStateById(state.id).subscribe({
+      next: (details) => {
+
+        this.editingState = details;
+
+        this.stateForm.patchValue({
+          name: details.name,
+          code: details.code,
+          slug: details.slug ?? '',
+          tagline: details.tagline ?? '',
+          description: details.description ?? '',
+          imageUrl: details.imageUrl ?? '',
+          isFeatured: details.isFeatured,
+          isActive: details.isActive
+        });
+
+        this.detailLoading = false;
+        this.showForm = true;
+
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+
+        this.detailLoading = false;
+
+        this.errorMessage =
+          error.error?.message ||
+          'Unable to load state details. Please try again.';
+
+        console.error('Load state details failed:', error);
+
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  // Close form
+  // ================= CLOSE FORM =================
+
   closeForm(): void {
-    if (this.saving) return;
+
+    if (this.saving || this.detailLoading) {
+      return;
+    }
 
     this.showForm = false;
     this.editingState = null;
+
     this.stateForm.reset();
+
+    this.cdr.detectChanges();
   }
 
-  // Save state (Create / Update)
+  // ================= SAVE STATE =================
+
   saveState(): void {
+
     if (this.stateForm.invalid || this.saving) {
       this.stateForm.markAllAsTouched();
       return;
@@ -155,7 +229,7 @@ export class StateManagementComponent implements OnInit {
 
     const formValue = this.stateForm.getRawValue();
 
-    const payload: Partial<State> = {
+    const payload: StateRequest = {
       name: formValue.name?.trim() ?? '',
       code: formValue.code?.trim().toUpperCase() ?? '',
       slug: formValue.slug?.trim() || null,
@@ -178,6 +252,7 @@ export class StateManagementComponent implements OnInit {
 
     request.subscribe({
       next: () => {
+
         this.saving = false;
         this.showForm = false;
         this.editingState = null;
@@ -189,83 +264,138 @@ export class StateManagementComponent implements OnInit {
         this.stateForm.reset();
 
         this.refreshData();
+
+        this.cdr.detectChanges();
       },
       error: (error) => {
+
         this.saving = false;
 
         this.errorMessage =
           error.error?.message || 'Unable to save state. Please try again.';
 
         console.error('Save state failed:', error);
+
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // Toggle active status
-  toggleActive(state: State): void {
-    const payload: Partial<State> = {
-      name: state.name,
-      code: state.code,
-      slug: state.slug,
-      description: state.description,
-      tagline: state.tagline,
-      imageUrl: state.imageUrl,
-      isFeatured: state.isFeatured,
-      isActive: !state.isActive,
-      config: state.config ?? {}
-    };
+  // ================= TOGGLE ACTIVE STATUS =================
 
-    this.stateService.updateState(state.id, payload).subscribe({
-      next: () => {
-        this.successMessage =
-          `${state.name} ${payload.isActive ? 'activated' : 'deactivated'} successfully.`;
+  toggleActive(state: AdminState): void {
 
-        this.refreshData();
+    if (this.saving || this.detailLoading) {
+      return;
+    }
+
+    this.clearMessages();
+    this.detailLoading = true;
+
+    // Fetch complete details before sending an update.
+    this.stateService.getAdminStateById(state.id).subscribe({
+      next: (details) => {
+
+        const payload: StateRequest = {
+          name: details.name,
+          code: details.code,
+          slug: details.slug,
+          tagline: details.tagline,
+          description: details.description,
+          imageUrl: details.imageUrl,
+          isFeatured: details.isFeatured,
+          isActive: !details.isActive,
+          config: details.config ?? {}
+        };
+
+        this.stateService.updateState(state.id, payload).subscribe({
+          next: () => {
+
+            this.detailLoading = false;
+
+            this.successMessage =
+              `${state.name} ${payload.isActive ? 'activated' : 'deactivated'} successfully.`;
+
+            this.refreshData();
+
+            this.cdr.detectChanges();
+          },
+          error: (error) => {
+
+            this.detailLoading = false;
+
+            this.errorMessage =
+              error.error?.message || 'Unable to update state status.';
+
+            console.error('Update state status failed:', error);
+
+            this.cdr.detectChanges();
+          }
+        });
       },
       error: (error) => {
-        this.errorMessage =
-          error.error?.message || 'Unable to update state status.';
 
-        console.error('Update state status failed:', error);
+        this.detailLoading = false;
+
+        this.errorMessage =
+          error.error?.message || 'Unable to load state details.';
+
+        console.error('Load state for status update failed:', error);
+
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // Delete state
-  deleteState(state: State): void {
+  // ================= DELETE STATE =================
+
+  deleteState(state: AdminState): void {
+
     const confirmed = window.confirm(
       `Are you sure you want to delete ${state.name}? This action cannot be undone.`
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     this.stateService.deleteState(state.id).subscribe({
       next: () => {
+
         this.successMessage = `${state.name} deleted successfully.`;
+
         this.refreshData();
+
+        this.cdr.detectChanges();
       },
       error: (error) => {
+
         this.errorMessage =
           error.error?.message || 'Unable to delete state.';
 
         console.error('Delete state failed:', error);
+
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // Refresh states and statistics
+  // ================= REFRESH =================
+
   private refreshData(): void {
     this.loadStates();
     this.loadStateStats();
   }
 
-  // Clear messages
+  // ================= MESSAGES =================
+
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
   }
 
-  // Statistics from API
+  // ================= STATISTICS =================
+
   get activeCount(): number {
     return this.stats.activeStates;
   }
@@ -282,7 +412,8 @@ export class StateManagementComponent implements OnInit {
     return this.stats.totalStates;
   }
 
-  // Form controls
+  // ================= FORM CONTROLS =================
+
   get nameControl() {
     return this.stateForm.controls.name;
   }

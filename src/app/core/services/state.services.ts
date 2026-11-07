@@ -4,6 +4,8 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environments';
 import { ApiResponse } from '../models/api-response.model';
+import { State } from '../models/state.model';
+
 
 import {
   AdminState,
@@ -18,7 +20,7 @@ import {
 export class StateService {
 
   private readonly http = inject(HttpClient);
-  private readonly statesUrl = `${environment.apiUrl}/states`;
+  private readonly apiUrl = environment.apiUrl;
   private readonly adminStatesUrl = `${environment.apiUrl}/admin/states`;
 
   // Unwrap ApiResponse<T> or direct T response
@@ -36,11 +38,20 @@ export class StateService {
 
   // ================= PUBLIC APIs =================
 
-  getStates(): Observable<any[]> {
-    return this.http
-      .get<ApiResponse<any[]> | any[]>(this.statesUrl)
-      .pipe(map(response => this.unwrap(response)));
-  }
+    getStates(): Observable<State[]> {
+      return this.http
+        .get<ApiResponse<State[]> | State[]>(
+          `${this.apiUrl}/states`
+        )
+        .pipe(
+          map(response => {
+            if (Array.isArray(response)) {
+              return response;
+            }
+            return response.data ?? [];
+          })
+        );
+    }
 
   // ================= ADMIN APIs =================
 

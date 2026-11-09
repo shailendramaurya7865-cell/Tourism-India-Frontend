@@ -108,7 +108,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/city-management/city-management.component')
             .then(m => m.CityManagementComponent)
+      },
+      {
+        path: 'categories',
+        loadComponent: () =>
+          import('./features/admin/category-management/category-management.component')
+            .then(m => m.CategoryManagementComponent)
       }
+
 
       // Add other admin child routes when their components are ready.
     ]

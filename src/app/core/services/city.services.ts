@@ -67,6 +67,19 @@ export class CityService {
 
   // ================= ADMIN APIs =================
 
+
+
+  // Get admin cities by state ID
+  getAdminCitiesByStateId(stateId: number): Observable<AdminCity[]> {
+    return this.http
+      .get<ApiResponse<AdminCity[]> | AdminCity[]>(
+        `${this.adminCitiesUrl}/by-state/${stateId}`
+      )
+      .pipe(
+        map(response => this.unwrap(response))
+      );
+  }
+
   // Get lightweight city list
   getAdminCities(): Observable<AdminCity[]> {
     return this.http

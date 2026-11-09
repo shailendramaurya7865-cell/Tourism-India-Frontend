@@ -114,6 +114,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/category-management/category-management.component')
             .then(m => m.CategoryManagementComponent)
+      },
+      {
+        path: 'tourist-places',
+        loadComponent: () =>
+          import('./features/admin/tourist-place-management/tourist-place-management.component')
+            .then(m => m.TouristPlaceManagementComponent)
       }
 
 

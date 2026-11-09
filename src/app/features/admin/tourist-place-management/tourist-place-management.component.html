@@ -1,15 +1,19 @@
-
 <div class="city-page">
 
-  <!-- Page Header -->
+  <!-- ================= PAGE HEADER ================= -->
+
   <div class="page-header">
     <div>
       <span class="breadcrumb">Admin / Destinations / Tourist Places</span>
       <h1>Tourist Place Management</h1>
-      <p>Manage tourist destinations, locations, categories and visitor information across Tourism India.</p>
+      <p>
+        Manage tourist destinations, locations, categories and visitor
+        information across Tourism India.
+      </p>
     </div>
 
     <button
+      type="button"
       class="btn-primary"
       (click)="openAddForm()"
       [disabled]="detailLoading || saving">
@@ -18,7 +22,8 @@
     </button>
   </div>
 
-  <!-- Notifications -->
+  <!-- ================= NOTIFICATIONS ================= -->
+
   <div class="alert alert-success" *ngIf="successMessage">
     {{ successMessage }}
     <button type="button" (click)="successMessage = ''">×</button>
@@ -29,7 +34,8 @@
     <button type="button" (click)="errorMessage = ''">×</button>
   </div>
 
-  <!-- Statistics -->
+  <!-- ================= STATISTICS ================= -->
+
   <div class="stats-grid">
 
     <div class="stat-card">
@@ -66,7 +72,8 @@
 
   </div>
 
-  <!-- Tourist Place Table -->
+  <!-- ================= TOURIST PLACE TABLE ================= -->
+
   <section class="content-card">
 
     <div class="table-header">
@@ -102,12 +109,13 @@
 
       <p>
         {{ searchTerm
-          ? 'Try another search term.'
+          ? 'No tourist places match your search.'
           : 'Start by adding your first tourist place.' }}
       </p>
 
       <button
         *ngIf="!searchTerm"
+        type="button"
         class="btn-primary"
         (click)="openAddForm()">
         Add Tourist Place
@@ -126,10 +134,10 @@
           <tr>
             <th>TOURIST PLACE</th>
             <th>LOCATION</th>
-            <th>CATEGORIES</th>
-            <th>RATING</th>
-            <th>STATUS</th>
-            <th>CREATED ON</th>
+            <th>CREATED AT</th>
+            <th>UPDATED AT</th>
+            <th>FEATURED</th>
+            <th>ACTIVE</th>
             <th class="action-heading">ACTIONS</th>
           </tr>
         </thead>
@@ -138,7 +146,7 @@
 
           <tr *ngFor="let place of filteredTouristPlaces">
 
-            <!-- Tourist Place Information -->
+            <!-- Tourist Place -->
             <td>
               <div class="state-info">
 
@@ -166,42 +174,57 @@
             <!-- Location -->
             <td>
               <div class="state-column">
-                <strong>{{ place.cityName }}</strong>
-                <small>{{ place.stateName }}</small>
+                <strong>{{ place.cityName || '—' }}</strong>
+                <small>{{ place.stateName || '—' }}</small>
               </div>
             </td>
 
-            <!-- Categories -->
-            <td>
-              <div class="category-tags">
-                <span
-                  class="featured-badge"
-                  *ngFor="let category of place.categoryNames">
-                  {{ category }}
-                </span>
-
-                <span
-                  *ngIf="!place.categoryNames?.length">
-                  —
-                </span>
-              </div>
-            </td>
-
-            <!-- Rating -->
+            <!-- Created At -->
             <td>
               <div class="state-column">
                 <strong>
-                  {{ place.averageRating != null
-                    ? ('★ ' + (place.averageRating | number:'1.1-1'))
+                  {{ place.createdAt
+                    ? (place.createdAt | date:'dd MMM yyyy')
                     : '—' }}
                 </strong>
                 <small>
-                  {{ place.reviewCount ?? 0 }} reviews
+                  {{ place.createdAt
+                    ? (place.createdAt | date:'hh:mm a')
+                    : '' }}
                 </small>
               </div>
             </td>
 
-            <!-- Status -->
+            <!-- Updated At -->
+            <td>
+              <div class="state-column">
+                <strong>
+                  {{ place.updatedAt
+                    ? (place.updatedAt | date:'dd MMM yyyy')
+                    : '—' }}
+                </strong>
+                <small>
+                  {{ place.updatedAt
+                    ? (place.updatedAt | date:'hh:mm a')
+                    : '' }}
+                </small>
+              </div>
+            </td>
+
+            <!-- Featured -->
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="place.isFeatured"
+                [class.inactive]="!place.isFeatured">
+
+                <span class="status-dot"></span>
+                {{ place.isFeatured ? 'Yes' : 'No' }}
+
+              </span>
+            </td>
+
+            <!-- Active -->
             <td>
               <span
                 class="status-badge"
@@ -209,21 +232,9 @@
                 [class.inactive]="!place.isActive">
 
                 <span class="status-dot"></span>
-
-                {{ place.isActive ? 'Active' : 'Inactive' }}
+                {{ place.isActive ? 'Yes' : 'No' }}
 
               </span>
-
-              <span
-                *ngIf="place.isFeatured"
-                class="featured-badge">
-                Featured
-              </span>
-            </td>
-
-            <!-- Created Date -->
-            <td>
-              {{ place.createdAt | date:'dd MMM yyyy' }}
             </td>
 
             <!-- Actions -->
@@ -232,29 +243,20 @@
 
                 <button
                   type="button"
+                  class="action-btn view-btn"
+                  title="View tourist place details"
+                  [disabled]="detailLoading || saving || viewLoading"
+                  (click)="openViewDetails(place)">
+                  <span>View</span>
+                </button>
+
+                <button
+                  type="button"
                   class="action-btn edit-btn"
                   title="Edit tourist place"
-                  [disabled]="detailLoading || saving"
+                  [disabled]="detailLoading || saving || viewLoading"
                   (click)="openEditForm(place)">
                   ✎
-                </button>
-
-                <button
-                  type="button"
-                  class="action-btn toggle-btn"
-                  [title]="place.isActive ? 'Deactivate place' : 'Activate place'"
-                  [disabled]="detailLoading || saving"
-                  (click)="toggleActive(place)">
-                  {{ place.isActive ? '◉' : '○' }}
-                </button>
-
-                <button
-                  type="button"
-                  class="action-btn delete-btn"
-                  title="Delete tourist place"
-                  [disabled]="detailLoading || saving"
-                  (click)="deleteTouristPlace(place)">
-                  🗑
                 </button>
 
               </div>
@@ -268,13 +270,72 @@
 
     </div>
 
-    <!-- Table Footer -->
-    <div
-      class="table-footer"
-      *ngIf="!loading && filteredTouristPlaces.length > 0">
+    <!-- ================= PAGINATION FOOTER ================= -->
 
-      Showing {{ filteredTouristPlaces.length }}
-      of {{ touristPlaces.length }} tourist places
+    <div
+      class="table-footer pagination-footer"
+      *ngIf="!loading && totalElements > 0">
+
+      <div class="pagination-info">
+        Showing
+        <strong>{{ currentPage * pageSize + 1 }}</strong>
+        to
+        <strong>
+          {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
+        </strong>
+        of
+        <strong>{{ totalElements }}</strong>
+        tourist places
+      </div>
+
+      <div class="pagination-size">
+        <label for="pageSize">Rows per page:</label>
+
+        <select
+          id="pageSize"
+          [value]="pageSize"
+          (change)="changePageSize(+$any($event.target).value)">
+
+          <option
+            *ngFor="let size of pageSizeOptions"
+            [value]="size">
+            {{ size }}
+          </option>
+
+        </select>
+      </div>
+
+      <div class="pagination-controls">
+
+        <button
+          type="button"
+          class="pagination-btn"
+          title="Previous page"
+          [disabled]="currentPage === 0 || loading"
+          (click)="previousPage()">
+          ‹
+        </button>
+
+        <button
+          type="button"
+          class="pagination-btn page-number"
+          *ngFor="let page of pageNumbers"
+          [class.active]="currentPage === page"
+          [disabled]="loading"
+          (click)="goToPage(page)">
+          {{ page + 1 }}
+        </button>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          title="Next page"
+          [disabled]="currentPage >= totalPages - 1 || loading"
+          (click)="nextPage()">
+          ›
+        </button>
+
+      </div>
 
     </div>
 
@@ -283,10 +344,374 @@
 </div>
 
 
-<!-- ADD / EDIT TOURIST PLACE MODAL -->
+<!-- ====================================================== -->
+<!-- VIEW TOURIST PLACE DETAILS MODAL                       -->
+<!-- ====================================================== -->
+
 <div
   class="modal-backdrop"
-  *ngIf="showForm || detailLoading"
+  *ngIf="viewingTouristPlace"
+  (click)="closeViewDetails()">
+
+  <div
+    class="state-modal tourist-place-modal view-tourist-place-modal"
+    (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header">
+
+      <div>
+        <h2>Tourist Place Details</h2>
+        <p>Complete information about this tourist destination.</p>
+      </div>
+
+      <button
+        type="button"
+        class="close-btn"
+        (click)="closeViewDetails()">
+        ×
+      </button>
+
+    </div>
+
+    <!-- Details -->
+    <div class="modal-body">
+
+      <!-- Place Overview -->
+      <div class="view-place-overview">
+
+        <img
+          *ngIf="viewingTouristPlace.imageUrl"
+          [src]="viewingTouristPlace.imageUrl"
+          [alt]="viewingTouristPlace.name"
+          class="view-place-image"
+        />
+
+        <div
+          *ngIf="!viewingTouristPlace.imageUrl"
+          class="view-place-placeholder">
+          {{ viewingTouristPlace.name.charAt(0) }}
+        </div>
+
+        <div class="view-place-heading">
+          <h3>{{ viewingTouristPlace.name }}</h3>
+
+          <p>
+            {{ viewingTouristPlace.tagline || 'Tourist Destination' }}
+          </p>
+
+          <div class="view-status-row">
+
+            <span
+              class="status-badge"
+              [class.active]="viewingTouristPlace.isActive"
+              [class.inactive]="!viewingTouristPlace.isActive">
+              {{ viewingTouristPlace.isActive ? 'Active' : 'Inactive' }}
+            </span>
+
+            <span
+              class="featured-badge"
+              *ngIf="viewingTouristPlace.isFeatured">
+              Featured
+            </span>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Basic Information -->
+      <div class="form-section">
+
+        <h3>Basic Information</h3>
+
+        <div class="view-details-grid">
+
+          <div class="view-detail-item">
+            <label>Place Name</label>
+            <strong>{{ viewingTouristPlace.name || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Slug</label>
+            <strong>{{ viewingTouristPlace.slug || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item full-width">
+            <label>Short Description</label>
+            <p>{{ viewingTouristPlace.shortDescription || '—' }}</p>
+          </div>
+
+          <div class="view-detail-item full-width">
+            <label>Full Description</label>
+            <p class="preserve-line-breaks">
+              {{ viewingTouristPlace.description || '—' }}
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Location Information -->
+      <div class="form-section">
+
+        <h3>Location Information</h3>
+
+        <div class="view-details-grid">
+
+          <div class="view-detail-item">
+            <label>City</label>
+            <strong>{{ viewingTouristPlace.cityName || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>State</label>
+            <strong>{{ viewingTouristPlace.stateName || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item full-width">
+            <label>Address</label>
+            <p>{{ viewingTouristPlace.address || '—' }}</p>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Latitude</label>
+            <strong>{{ viewingTouristPlace.latitude ?? '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Longitude</label>
+            <strong>{{ viewingTouristPlace.longitude ?? '—' }}</strong>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Categories -->
+      <div class="form-section">
+
+        <h3>Categories</h3>
+
+        <div class="category-tags">
+          <span
+            class="featured-badge"
+            *ngFor="let category of viewingTouristPlace.categoryNames">
+            {{ category }}
+          </span>
+
+          <span *ngIf="!viewingTouristPlace.categoryNames?.length">
+            No categories assigned.
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Visitor Information -->
+      <div class="form-section">
+
+        <h3>Visitor Information</h3>
+
+        <div class="view-details-grid">
+
+          <div class="view-detail-item">
+            <label>Entry Fee</label>
+            <strong>
+              {{ viewingTouristPlace.entryFee != null
+                ? ('₹ ' + viewingTouristPlace.entryFee)
+                : 'Not specified' }}
+            </strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Time Required</label>
+            <strong>{{ viewingTouristPlace.timeRequired || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Opening Time</label>
+            <strong>{{ viewingTouristPlace.openingTime || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Closing Time</label>
+            <strong>{{ viewingTouristPlace.closingTime || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Best Time to Visit</label>
+            <strong>{{ viewingTouristPlace.bestTimeToVisit || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Weekly Off</label>
+            <strong>{{ viewingTouristPlace.weeklyOf || '—' }}</strong>
+          </div>
+
+          <div class="view-detail-item full-width">
+            <label>How to Reach</label>
+            <p class="preserve-line-breaks">
+              {{ viewingTouristPlace.howToReach || '—' }}
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Ratings -->
+      <div class="form-section">
+
+        <h3>Ratings and Reviews</h3>
+
+        <div class="view-details-grid">
+
+          <div class="view-detail-item">
+            <label>Average Rating</label>
+            <strong>
+              {{ viewingTouristPlace.averageRating != null
+                ? ('★ ' + (viewingTouristPlace.averageRating | number:'1.1-1'))
+                : 'Not rated yet' }}
+            </strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Total Reviews</label>
+            <strong>{{ viewingTouristPlace.reviewCount ?? 0 }}</strong>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Media -->
+      <div class="form-section">
+
+        <h3>Media Information</h3>
+
+        <div class="view-detail-item full-width">
+          <label>Image URL</label>
+          <p>{{ viewingTouristPlace.imageUrl || '—' }}</p>
+        </div>
+
+        <div
+          class="image-preview view-image-preview"
+          *ngIf="viewingTouristPlace.imageUrl">
+
+          <img
+            [src]="viewingTouristPlace.imageUrl"
+            [alt]="viewingTouristPlace.name"
+          />
+
+        </div>
+
+      </div>
+
+      <!-- Publishing Settings -->
+      <div class="form-section">
+
+        <h3>Publishing Settings</h3>
+
+        <div class="view-details-grid">
+
+          <div class="view-detail-item">
+            <label>Featured</label>
+            <strong>
+              {{ viewingTouristPlace.isFeatured ? 'Yes' : 'No' }}
+            </strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Active</label>
+            <strong>
+              {{ viewingTouristPlace.isActive ? 'Yes' : 'No' }}
+            </strong>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Audit Information -->
+      <div class="form-section">
+
+        <h3>Record Information</h3>
+
+        <div class="view-details-grid">
+
+          <div class="view-detail-item">
+            <label>Created At</label>
+            <strong>
+              {{ viewingTouristPlace.createdAt
+                ? (viewingTouristPlace.createdAt | date:'dd MMM yyyy, hh:mm a')
+                : '—' }}
+            </strong>
+          </div>
+
+          <div class="view-detail-item">
+            <label>Updated At</label>
+            <strong>
+              {{ viewingTouristPlace.updatedAt
+                ? (viewingTouristPlace.updatedAt | date:'dd MMM yyyy, hh:mm a')
+                : '—' }}
+            </strong>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="closeViewDetails()">
+        Close
+      </button>
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="editFromView()">
+        Edit Tourist Place
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- VIEW DETAILS LOADING MODAL                             -->
+<!-- ====================================================== -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="viewLoading">
+
+  <div class="state-modal loading-modal">
+    <div class="loading-state">
+      Loading tourist place details...
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- ADD / EDIT TOURIST PLACE MODAL                         -->
+<!-- ====================================================== -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="showForm || (detailLoading && !viewLoading)"
   (click)="closeForm()">
 
   <div
@@ -302,7 +727,6 @@
 
     </div>
 
-    <!-- Form -->
     <ng-container *ngIf="showForm">
 
       <!-- Modal Header -->
@@ -338,17 +762,14 @@
 
         <div class="modal-body">
 
-          <!-- ================= BASIC INFORMATION ================= -->
-
+          <!-- BASIC INFORMATION -->
           <div class="form-section">
 
             <h3>Basic Information</h3>
 
             <div class="form-grid">
 
-              <!-- Name -->
               <div class="form-group full-width">
-
                 <label>Tourist Place Name <span>*</span></label>
 
                 <input
@@ -360,16 +781,11 @@
                 <small
                   class="validation-error"
                   *ngIf="nameControl.touched && nameControl.invalid">
-
                   Tourist place name is required.
-
                 </small>
-
               </div>
 
-              <!-- Slug -->
               <div class="form-group">
-
                 <label>Slug <span>*</span></label>
 
                 <input
@@ -381,16 +797,11 @@
                 <small
                   class="validation-error"
                   *ngIf="slugControl.touched && slugControl.invalid">
-
                   Slug is required.
-
                 </small>
-
               </div>
 
-              <!-- Tagline -->
               <div class="form-group">
-
                 <label>Tagline</label>
 
                 <input
@@ -398,74 +809,58 @@
                   formControlName="tagline"
                   placeholder="e.g. An eternal symbol of love"
                 />
-
               </div>
 
-              <!-- Short Description -->
               <div class="form-group full-width">
-
                 <label>Short Description</label>
 
                 <textarea
                   rows="2"
                   formControlName="shortDescription"
-                  placeholder="Write a brief introduction..."
-                ></textarea>
-
+                  placeholder="Write a brief introduction...">
+                </textarea>
               </div>
 
-              <!-- Full Description -->
               <div class="form-group full-width">
-
                 <label>Full Description</label>
 
                 <textarea
                   rows="5"
                   formControlName="description"
-                  placeholder="Write detailed information about this tourist place..."
-                ></textarea>
-
+                  placeholder="Write detailed information about this tourist place...">
+                </textarea>
               </div>
 
             </div>
 
           </div>
 
-
-          <!-- ================= LOCATION ================= -->
-
+          <!-- LOCATION INFORMATION -->
           <div class="form-section">
 
             <h3>Location Information</h3>
 
             <div class="form-grid">
 
-              <!-- State -->
               <div class="form-group">
-
                 <label>State <span>*</span></label>
 
                 <select
                   formControlName="stateId"
-                  (ngModelChange)="onStateChange($event)">
+                  (change)="onStateChange(+$any($event.target).value || null)">
 
                   <option [ngValue]="null">Select State</option>
 
                   <option
                     *ngFor="let state of states"
                     [ngValue]="state.id">
-
                     {{ state.name }}
-
                   </option>
 
                 </select>
-
               </div>
 
-              <!-- City -->
               <div class="form-group">
-
                 <label>City <span>*</span></label>
 
                 <select
@@ -473,17 +868,13 @@
                   [disabled]="!touristPlaceForm.get('stateId')?.value || citiesLoading">
 
                   <option [ngValue]="null">
-                    {{ citiesLoading
-                      ? 'Loading cities...'
-                      : 'Select City' }}
+                    {{ citiesLoading ? 'Loading cities...' : 'Select City' }}
                   </option>
 
                   <option
                     *ngFor="let city of cities"
                     [ngValue]="city.id">
-
                     {{ city.name }}
-
                   </option>
 
                 </select>
@@ -491,29 +882,21 @@
                 <small
                   class="validation-error"
                   *ngIf="cityControl.touched && cityControl.invalid">
-
                   Please select a city.
-
                 </small>
-
               </div>
 
-              <!-- Address -->
               <div class="form-group full-width">
-
                 <label>Address</label>
 
                 <textarea
                   rows="2"
                   formControlName="address"
-                  placeholder="Enter complete address..."
-                ></textarea>
-
+                  placeholder="Enter complete address...">
+                </textarea>
               </div>
 
-              <!-- Latitude -->
               <div class="form-group">
-
                 <label>Latitude</label>
 
                 <input
@@ -522,12 +905,9 @@
                   formControlName="latitude"
                   placeholder="e.g. 27.1751"
                 />
-
               </div>
 
-              <!-- Longitude -->
               <div class="form-group">
-
                 <label>Longitude</label>
 
                 <input
@@ -536,16 +916,13 @@
                   formControlName="longitude"
                   placeholder="e.g. 78.0421"
                 />
-
               </div>
 
             </div>
 
           </div>
 
-
-          <!-- ================= CATEGORIES ================= -->
-
+          <!-- CATEGORIES -->
           <div class="form-section">
 
             <h3>Tourist Place Categories</h3>
@@ -564,7 +941,10 @@
                   type="checkbox"
                   [checked]="isCategorySelected(category.id)"
                   [disabled]="!category.isActive"
-                  (change)="toggleCategory(category.id, $any($event.target).checked)"
+                  (change)="toggleCategory(
+                    category.id,
+                    $any($event.target).checked
+                  )"
                 />
 
                 <span>{{ category.name }}</span>
@@ -574,9 +954,7 @@
               <p
                 class="empty-category"
                 *ngIf="categories.length === 0">
-
                 No categories available. Please create categories first.
-
               </p>
 
             </div>
@@ -584,25 +962,19 @@
             <small
               class="validation-error"
               *ngIf="errorMessage === 'Please select at least one category.'">
-
               Please select at least one category.
-
             </small>
 
           </div>
 
-
-          <!-- ================= VISITOR INFORMATION ================= -->
-
+          <!-- VISITOR INFORMATION -->
           <div class="form-section">
 
             <h3>Visitor Information</h3>
 
             <div class="form-grid">
 
-              <!-- Entry Fee -->
               <div class="form-group">
-
                 <label>Entry Fee (₹)</label>
 
                 <input
@@ -612,12 +984,9 @@
                   formControlName="entryFee"
                   placeholder="e.g. 50"
                 />
-
               </div>
 
-              <!-- Time Required -->
               <div class="form-group">
-
                 <label>Time Required</label>
 
                 <input
@@ -625,36 +994,27 @@
                   formControlName="timeRequired"
                   placeholder="e.g. 2-3 hours"
                 />
-
               </div>
 
-              <!-- Opening Time -->
               <div class="form-group">
-
                 <label>Opening Time</label>
 
                 <input
                   type="time"
                   formControlName="openingTime"
                 />
-
               </div>
 
-              <!-- Closing Time -->
               <div class="form-group">
-
                 <label>Closing Time</label>
 
                 <input
                   type="time"
                   formControlName="closingTime"
                 />
-
               </div>
 
-              <!-- Best Time to Visit -->
               <div class="form-group">
-
                 <label>Best Time to Visit</label>
 
                 <input
@@ -662,12 +1022,9 @@
                   formControlName="bestTimeToVisit"
                   placeholder="e.g. October to March"
                 />
-
               </div>
 
-              <!-- Weekly Off -->
               <div class="form-group">
-
                 <label>Weekly Off</label>
 
                 <input
@@ -675,29 +1032,23 @@
                   formControlName="weeklyOf"
                   placeholder="e.g. Friday"
                 />
-
               </div>
 
-              <!-- How to Reach -->
               <div class="form-group full-width">
-
                 <label>How to Reach</label>
 
                 <textarea
                   rows="3"
                   formControlName="howToReach"
-                  placeholder="Describe how visitors can reach this destination..."
-                ></textarea>
-
+                  placeholder="Describe how visitors can reach this destination...">
+                </textarea>
               </div>
 
             </div>
 
           </div>
 
-
-          <!-- ================= MEDIA ================= -->
-
+          <!-- MEDIA INFORMATION -->
           <div class="form-section">
 
             <h3>Media Information</h3>
@@ -705,7 +1056,6 @@
             <div class="form-grid">
 
               <div class="form-group full-width">
-
                 <label>Image URL</label>
 
                 <input
@@ -713,10 +1063,8 @@
                   formControlName="imageUrl"
                   placeholder="https://example.com/taj-mahal.jpg"
                 />
-
               </div>
 
-              <!-- Image Preview -->
               <div
                 class="image-preview"
                 *ngIf="touristPlaceForm.get('imageUrl')?.value">
@@ -732,9 +1080,7 @@
 
           </div>
 
-
-          <!-- ================= PUBLISHING SETTINGS ================= -->
-
+          <!-- PUBLISHING SETTINGS -->
           <div class="form-section">
 
             <h3>Publishing Settings</h3>
@@ -743,7 +1089,9 @@
 
               <div>
                 <strong>Featured Tourist Place</strong>
-                <small>Highlight this destination on the public website.</small>
+                <small>
+                  Highlight this destination on the public website.
+                </small>
               </div>
 
               <input
@@ -759,7 +1107,9 @@
 
               <div>
                 <strong>Active Tourist Place</strong>
-                <small>Make this destination visible on the public website.</small>
+                <small>
+                  Make this destination visible on the public website.
+                </small>
               </div>
 
               <input
@@ -773,18 +1123,14 @@
 
           </div>
 
-
-          <!-- Form Error -->
+          <!-- FORM ERROR -->
           <div class="alert alert-error" *ngIf="errorMessage">
-
             {{ errorMessage }}
-
           </div>
 
         </div>
 
-
-        <!-- Modal Footer -->
+        <!-- MODAL FOOTER -->
         <div class="modal-footer">
 
           <button
@@ -792,9 +1138,7 @@
             class="btn-secondary"
             [disabled]="saving"
             (click)="closeForm()">
-
             Cancel
-
           </button>
 
           <button

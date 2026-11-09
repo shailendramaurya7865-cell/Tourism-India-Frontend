@@ -10,7 +10,8 @@ import {
   AdminTouristPlace,
   AdminTouristPlaceDetail,
   TouristPlaceStats,
-  TouristPlaceRequest
+  TouristPlaceRequest,
+  PageResponse
 } from '../../features/admin/models/admin-tourist-place.model';
 
 @Injectable({
@@ -79,15 +80,28 @@ export class TouristPlaceService {
   // ================= ADMIN APIs =================
 
   // Get lightweight tourist place list
-  getAdminTouristPlaces(): Observable<AdminTouristPlace[]> {
-    return this.http
-      .get<ApiResponse<AdminTouristPlace[]> | AdminTouristPlace[]>(
-        this.adminTouristPlacesUrl
-      )
-      .pipe(
-        map(response => this.unwrap(response) ?? [])
-      );
-  }
+// Get paginated admin tourist places
+getAdminTouristPlaces(
+  page: number = 0,
+  size: number = 10
+): Observable<PageResponse<AdminTouristPlace>> {
+
+  const params = new HttpParams()
+    .set('page', page)
+    .set('size', size);
+
+  return this.http
+    .get<
+      ApiResponse<PageResponse<AdminTouristPlace>> |
+      PageResponse<AdminTouristPlace>
+    >(
+      this.adminTouristPlacesUrl,
+      { params }
+    )
+    .pipe(
+      map(response => this.unwrap(response))
+    );
+}
 
   // Get complete tourist place details
   getAdminTouristPlaceById(

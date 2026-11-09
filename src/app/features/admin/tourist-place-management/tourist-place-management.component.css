@@ -10,7 +10,7 @@
   min-height: 100%;
 }
 
-/* Header */
+/* ================= HEADER ================= */
 
 .page-header {
   display: flex;
@@ -73,7 +73,7 @@
   line-height: 14px;
 }
 
-/* Statistics */
+/* ================= STATISTICS ================= */
 
 .stats-grid {
   display: grid;
@@ -134,7 +134,7 @@
   margin: 4px 0 0;
 }
 
-/* Main Table */
+/* ================= MAIN TABLE ================= */
 
 .content-card {
   background: #fff;
@@ -181,6 +181,7 @@
   width: 100%;
   font-size: 12px;
   color: #26382e;
+  background: transparent;
 }
 
 .search-box:focus-within {
@@ -221,7 +222,7 @@ tbody tr:hover {
   background: #fbfdfb;
 }
 
-/* Tourist Place Information */
+/* ================= TOURIST PLACE INFORMATION ================= */
 
 .state-info {
   display: flex;
@@ -259,7 +260,7 @@ tbody tr:hover {
   font-size: 10px;
 }
 
-/* Location Information */
+/* ================= LOCATION INFORMATION ================= */
 
 .state-column {
   display: flex;
@@ -278,7 +279,7 @@ tbody tr:hover {
   font-size: 10px;
 }
 
-/* Category Tags */
+/* ================= CATEGORY TAGS ================= */
 
 .category-tags {
   display: flex;
@@ -291,7 +292,7 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
-/* Badges */
+/* ================= BADGES ================= */
 
 .featured-badge,
 .status-badge {
@@ -335,7 +336,7 @@ tbody tr:hover {
   background: currentColor;
 }
 
-/* Actions */
+/* ================= ACTIONS ================= */
 
 .action-heading {
   text-align: center;
@@ -344,6 +345,7 @@ tbody tr:hover {
 .action-buttons {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 7px;
 }
 
@@ -387,6 +389,16 @@ tbody tr:hover {
   background: #faeeee;
 }
 
+.view-btn {
+  color: #315e46;
+}
+
+.view-btn:hover:not(:disabled) {
+  background: #e8f0eb;
+}
+
+/* ================= TABLE FOOTER ================= */
+
 .table-footer {
   padding: 14px 20px;
   border-top: 1px solid #edf1ee;
@@ -394,7 +406,85 @@ tbody tr:hover {
   font-size: 11px;
 }
 
-/* Empty and Loading */
+/* ================= PAGINATION ================= */
+
+.pagination-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 15px 20px;
+  border-top: 1px solid #edf1ee;
+  background: #fff;
+}
+
+.pagination-info {
+  color: #829188;
+  font-size: 11px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid #e1e8e2;
+  border-radius: 6px;
+  background: white;
+  color: #53665a;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #2d6145;
+  color: #173d2b;
+  background: #f0f7f1;
+}
+
+.pagination-btn.active {
+  background: #173d2b;
+  border-color: #173d2b;
+  color: white;
+  font-weight: 600;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #829188;
+  font-size: 11px;
+}
+
+.page-size-selector select {
+  border: 1px solid #dfe7e1;
+  border-radius: 6px;
+  padding: 7px 9px;
+  background: white;
+  color: #26382e;
+  outline: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.page-size-selector select:focus {
+  border-color: #2d6145;
+}
+
+/* ================= EMPTY AND LOADING ================= */
 
 .loading-state,
 .empty-state {
@@ -426,7 +516,7 @@ tbody tr:hover {
   margin: 0 0 17px;
 }
 
-/* Alerts */
+/* ================= ALERTS ================= */
 
 .alert {
   padding: 12px 15px;
@@ -436,6 +526,7 @@ tbody tr:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
 }
 
 .alert button {
@@ -455,7 +546,7 @@ tbody tr:hover {
   background: #faeeee;
 }
 
-/* Modal */
+/* ================= MODAL BACKDROP ================= */
 
 .modal-backdrop {
   position: fixed;
@@ -468,7 +559,7 @@ tbody tr:hover {
   padding: 20px;
 }
 
-/* Larger modal for tourist place form */
+/* ================= ADD / EDIT MODAL ================= */
 
 .tourist-place-modal {
   width: 100%;
@@ -506,13 +597,12 @@ tbody tr:hover {
   border-radius: 6px;
   font-size: 21px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .close-btn:hover {
   background: #e8f0eb;
 }
-
-/* Modal Form */
 
 .tourist-place-modal form {
   display: flex;
@@ -551,6 +641,8 @@ tbody tr:hover {
   margin: -9px 0 16px;
 }
 
+/* ================= FORM GRID ================= */
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -561,6 +653,7 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  min-width: 0;
 }
 
 .form-group.full-width {
@@ -577,7 +670,7 @@ tbody tr:hover {
   color: #c65353;
 }
 
-/* Inputs and Textarea */
+/* ================= FORM INPUTS ================= */
 
 .form-group input,
 .form-group select,
@@ -612,7 +705,8 @@ tbody tr:hover {
 }
 
 .form-group input:disabled,
-.form-group select:disabled {
+.form-group select:disabled,
+.form-group textarea:disabled {
   background: #f4f7f6;
   cursor: not-allowed;
 }
@@ -622,7 +716,7 @@ tbody tr:hover {
   font-size: 10px;
 }
 
-/* Category Selection */
+/* ================= CATEGORY SELECTION ================= */
 
 .category-selection {
   display: grid;
@@ -672,7 +766,7 @@ tbody tr:hover {
   padding: 10px 0;
 }
 
-/* Image Preview */
+/* ================= IMAGE PREVIEW ================= */
 
 .image-preview {
   width: 190px;
@@ -689,7 +783,7 @@ tbody tr:hover {
   object-fit: cover;
 }
 
-/* Publishing Settings */
+/* ================= PUBLISHING SETTINGS ================= */
 
 .settings-section {
   margin-top: 25px;
@@ -708,6 +802,7 @@ tbody tr:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 15px;
   padding: 12px 0;
   cursor: pointer;
 }
@@ -767,7 +862,7 @@ tbody tr:hover {
   outline-offset: 3px;
 }
 
-/* Modal Footer */
+/* ================= MODAL FOOTER ================= */
 
 .modal-footer {
   display: flex;
@@ -793,7 +888,259 @@ tbody tr:hover {
   background: #f4f7f6;
 }
 
-/* Responsive */
+/* ================= VIEW DETAILS MODAL ================= */
+
+.view-tourist-place-modal {
+  width: 100%;
+  max-width: 850px;
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+.view-tourist-place-modal .modal-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Overview */
+
+.view-place-overview {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid #e8eeea;
+  border-radius: 10px;
+  background: #fbfdfb;
+}
+
+.view-place-image,
+.view-place-placeholder {
+  width: 155px;
+  height: 125px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.view-place-placeholder {
+  display: grid;
+  place-items: center;
+  background: #e8f0eb;
+  color: #315e46;
+  font-size: 35px;
+}
+
+.view-place-heading {
+  min-width: 0;
+}
+
+.view-place-heading h3 {
+  color: #173d2b;
+  font-size: 21px;
+  font-weight: 700;
+  margin: 0 0 7px;
+  overflow-wrap: anywhere;
+}
+
+.view-place-heading p {
+  color: #829188;
+  font-size: 12px;
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+
+.view-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Detail sections */
+
+.view-details-section {
+  margin-bottom: 25px;
+}
+
+.view-details-section h3 {
+  color: #173d2b;
+  font-size: 14px;
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf1ee;
+}
+
+.view-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.view-detail-item {
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid #edf1ee;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.view-detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.view-detail-item label {
+  display: block;
+  color: #929d96;
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.view-detail-item p {
+  color: #315e46;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.preserve-line-breaks {
+  white-space: pre-line;
+}
+
+/* Categories in view modal */
+
+.view-category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.view-category-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: #e8f0eb;
+  color: #315e46;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.no-category-text {
+  color: #929d96;
+  font-size: 12px;
+}
+
+/* Image in view details */
+
+.view-image-preview {
+  width: 100%;
+  max-width: 350px;
+  max-height: 210px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e1e8e2;
+}
+
+/* View modal footer */
+
+.view-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 25px;
+  border-top: 1px solid #edf1ee;
+  background: white;
+  flex-shrink: 0;
+}
+
+.view-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.btn-view-edit {
+  border: none;
+  background: #173d2b;
+  color: white;
+  padding: 10px 17px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-view-edit:hover {
+  background: #2d6145;
+}
+
+/* ================= LOADING MODAL ================= */
+
+.loading-modal {
+  width: 100%;
+  max-width: 350px;
+  padding: 35px 25px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+}
+
+.loading-spinner {
+  width: 35px;
+  height: 35px;
+  border: 3px solid #e8f0eb;
+  border-top-color: #2d6145;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-modal p {
+  color: #53665a;
+  font-size: 13px;
+  margin: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ================= SCROLLBAR ================= */
+
+.modal-body::-webkit-scrollbar {
+  width: 7px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f4f7f6;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #cbd8ce;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #9caf9f;
+}
+
+/* ================= RESPONSIVE: TABLET ================= */
 
 @media (max-width: 900px) {
   .stats-grid {
@@ -803,10 +1150,15 @@ tbody tr:hover {
   .category-selection {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .view-tourist-place-modal {
+    max-width: 750px;
+  }
 }
 
-@media (max-width: 600px) {
+/* ================= RESPONSIVE: MOBILE ================= */
 
+@media (max-width: 600px) {
   .city-page {
     padding: 17px;
   }
@@ -814,6 +1166,10 @@ tbody tr:hover {
   .page-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
   }
 
   .table-header {
@@ -859,7 +1215,8 @@ tbody tr:hover {
     padding: 10px;
   }
 
-  .tourist-place-modal {
+  .tourist-place-modal,
+  .view-tourist-place-modal {
     max-height: 95vh;
   }
 
@@ -870,5 +1227,79 @@ tbody tr:hover {
 
   .modal-footer {
     padding: 15px 18px;
+  }
+
+  .view-place-overview {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .view-place-image,
+  .view-place-placeholder {
+    width: 100%;
+    height: 175px;
+  }
+
+  .view-place-heading h3 {
+    font-size: 18px;
+  }
+
+  .view-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .view-detail-item.full-width {
+    grid-column: auto;
+  }
+
+  .view-modal-footer {
+    padding: 13px 18px;
+    flex-wrap: wrap;
+  }
+
+  .view-modal-actions {
+    width: 100%;
+  }
+
+  .view-modal-actions button {
+    flex: 1;
+  }
+
+  .pagination-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .page-size-selector {
+    width: 100%;
+  }
+}
+
+/* ================= SMALL MOBILE ================= */
+
+@media (max-width: 380px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pagination-btn {
+    min-width: 29px;
+    height: 29px;
+    padding: 0 7px;
+  }
+
+  .modal-header h2 {
+    font-size: 16px;
+  }
+
+  .view-place-heading h3 {
+    font-size: 16px;
   }
 }

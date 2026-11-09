@@ -34,7 +34,11 @@ import {
 @Component({
   selector: 'app-tourist-place-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   templateUrl: './tourist-place-management.component.html',
   styleUrl: './tourist-place-management.component.css'
 })
@@ -47,6 +51,8 @@ export class TouristPlaceManagementComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  // ================= DATA =================
 
   touristPlaces: AdminTouristPlace[] = [];
   filteredTouristPlaces: AdminTouristPlace[] = [];
@@ -64,49 +70,97 @@ export class TouristPlaceManagementComponent implements OnInit {
     featuredTouristPlaces: 0
   };
 
+  // ================= PAGINATION =================
+
+  currentPage = 0;
+  pageSize = 10;
+  totalPages = 0;
+  totalElements = 0;
+
+  pageSizeOptions = [5, 10, 20, 50];
+
+  readonly Math = Math;
+
+  get pageNumbers(): number[] {
+    return Array.from(
+      { length: this.totalPages },
+      (_, index) => index
+    );
+  }
+
+  // ================= LOADING STATES =================
+
   loading = false;
   saving = false;
   detailLoading = false;
   citiesLoading = false;
+  viewLoading = false;
+
+  // ================= MESSAGES =================
 
   errorMessage = '';
   successMessage = '';
 
+  // ================= SEARCH =================
+
   searchTerm = '';
+
+  // ================= MODALS =================
 
   showForm = false;
 
   editingTouristPlace: AdminTouristPlaceDetail | null = null;
 
+  viewingTouristPlace: AdminTouristPlaceDetail | null = null;
+
+  // ================= FORM =================
+
   touristPlaceForm = this.fb.group({
-    name: ['', [Validators.required, Validators.maxLength(255)]],
+    name: ['', [
+      Validators.required,
+      Validators.maxLength(255)
+    ]],
+
     slug: ['', Validators.required],
+
     tagline: ['', Validators.maxLength(200)],
 
     shortDescription: ['', Validators.maxLength(500)],
+
     description: [''],
 
     stateId: [null as number | null, Validators.required],
+
     cityId: [null as number | null, Validators.required],
 
     address: ['', Validators.maxLength(500)],
+
     latitude: [null as number | null],
+
     longitude: [null as number | null],
 
     entryFee: [null as number | null],
+
     openingTime: [''],
+
     closingTime: [''],
 
     bestTimeToVisit: [''],
+
     timeRequired: [''],
+
     weeklyOf: [''],
+
     howToReach: [''],
 
     imageUrl: [''],
 
     isFeatured: [false],
+
     isActive: [true]
   });
+
+  // ================= INITIALIZATION =================
 
   ngOnInit(): void {
     this.loadTouristPlaces();
@@ -115,64 +169,88 @@ export class TouristPlaceManagementComponent implements OnInit {
     this.loadCategories();
   }
 
-  // ================= LOAD DATA =================
+  // ================= LOAD TOURIST PLACES =================
 
   loadTouristPlaces(): void {
     this.loading = true;
     this.errorMessage = '';
 
-    this.touristPlaceService.getAdminTouristPlaces().subscribe({
-      next: (places) => {
-        this.touristPlaces = places ?? [];
-        this.applySearch();
+    this.touristPlaceService
+      .getAdminTouristPlaces(this.currentPage, this.pageSize)
+      .subscribe({
+        next: (response) => {
+          this.touristPlaces = response.content ?? [];
 
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        this.loading = false;
+          this.totalElements = response.totalElements ?? 0;
+          this.totalPages = response.totalPages ?? 0;
 
-        this.errorMessage =
-          error.error?.message ||
-          'Unable to load tourist places. Please try again.';
+          this.applySearch();
 
-        console.error('Load tourist places failed:', error);
-        this.cdr.detectChanges();
-      }
-    });
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+
+        error: (error) => {
+          this.loading = false;
+
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to load tourist places. Please try again.';
+
+          console.error('Load tourist places failed:', error);
+
+          this.cdr.detectChanges();
+        }
+      });
   }
+
+  // ================= LOAD STATISTICS =================
 
   loadTouristPlaceStats(): void {
     this.touristPlaceService.getTouristPlaceStats().subscribe({
       next: (stats) => {
         this.stats = stats;
+
         this.cdr.detectChanges();
       },
+
       error: (error) => {
-        console.error('Load tourist place statistics failed:', error);
+        console.error(
+          'Load tourist place statistics failed:',
+          error
+        );
+
         this.cdr.detectChanges();
       }
     });
   }
 
+  // ================= LOAD STATES =================
+
   loadStates(): void {
     this.stateService.getAdminStates().subscribe({
       next: (states) => {
         this.states = states ?? [];
+
         this.cdr.detectChanges();
       },
+
       error: (error) => {
         console.error('Load states failed:', error);
       }
     });
   }
 
+  // ================= LOAD CATEGORIES =================
+
   loadCategories(): void {
     this.categoryService.getAdminCategories().subscribe({
       next: (categories) => {
         this.categories = categories ?? [];
+
         this.cdr.detectChanges();
       },
+
       error: (error) => {
         console.error('Load categories failed:', error);
       }
@@ -184,17 +262,67 @@ export class TouristPlaceManagementComponent implements OnInit {
   applySearch(): void {
     const term = this.searchTerm.trim().toLowerCase();
 
+    if (!term) {
+      this.filteredTouristPlaces = [...this.touristPlaces];
+      return;
+    }
+
     this.filteredTouristPlaces = this.touristPlaces.filter(place =>
-      place.name.toLowerCase().includes(term) ||
+      (place.name ?? '').toLowerCase().includes(term) ||
       (place.cityName ?? '').toLowerCase().includes(term) ||
       (place.stateName ?? '').toLowerCase().includes(term) ||
       (place.tagline ?? '').toLowerCase().includes(term)
     );
   }
 
+  // ================= PAGINATION METHODS =================
+
+  goToPage(page: number): void {
+    if (
+      page < 0 ||
+      page >= this.totalPages ||
+      page === this.currentPage ||
+      this.loading
+    ) {
+      return;
+    }
+
+    this.currentPage = page;
+    this.loadTouristPlaces();
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 0) {
+      this.goToPage(this.currentPage - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages - 1) {
+      this.goToPage(this.currentPage + 1);
+    }
+  }
+
+  changePageSize(size: number | string): void {
+    const newSize = Number(size);
+
+    if (!newSize || newSize < 1 || this.loading) {
+      return;
+    }
+
+    this.pageSize = newSize;
+    this.currentPage = 0;
+
+    this.loadTouristPlaces();
+  }
+
   // ================= ADD TOURIST PLACE =================
 
   openAddForm(): void {
+    if (this.saving || this.detailLoading) {
+      return;
+    }
+
     this.editingTouristPlace = null;
     this.selectedCategoryIds = [];
     this.cities = [];
@@ -223,6 +351,7 @@ export class TouristPlaceManagementComponent implements OnInit {
     });
 
     this.clearMessages();
+
     this.showForm = true;
 
     this.cdr.detectChanges();
@@ -238,28 +367,36 @@ export class TouristPlaceManagementComponent implements OnInit {
     });
 
     if (!stateId) {
+      this.citiesLoading = false;
       this.cdr.detectChanges();
       return;
     }
 
     this.citiesLoading = true;
 
-    this.cityService.getAdminCitiesByStateId(stateId).subscribe({
-      next: (cities) => {
-        this.cities = cities ?? [];
-        this.citiesLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        this.citiesLoading = false;
+    this.cityService
+      .getAdminCitiesByStateId(stateId)
+      .subscribe({
+        next: (cities) => {
+          this.cities = cities ?? [];
 
-        this.errorMessage =
-          error.error?.message || 'Unable to load cities.';
+          this.citiesLoading = false;
 
-        console.error('Load cities failed:', error);
-        this.cdr.detectChanges();
-      }
-    });
+          this.cdr.detectChanges();
+        },
+
+        error: (error) => {
+          this.citiesLoading = false;
+
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to load cities.';
+
+          console.error('Load cities failed:', error);
+
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   // ================= CATEGORY SELECTION =================
@@ -274,7 +411,9 @@ export class TouristPlaceManagementComponent implements OnInit {
       }
     } else {
       this.selectedCategoryIds =
-        this.selectedCategoryIds.filter(id => id !== categoryId);
+        this.selectedCategoryIds.filter(
+          id => id !== categoryId
+        );
     }
   }
 
@@ -285,8 +424,11 @@ export class TouristPlaceManagementComponent implements OnInit {
   // ================= EDIT TOURIST PLACE =================
 
   openEditForm(place: AdminTouristPlace): void {
-
-    if (this.detailLoading || this.saving) {
+    if (
+      this.detailLoading ||
+      this.saving ||
+      this.viewLoading
+    ) {
       return;
     }
 
@@ -298,12 +440,12 @@ export class TouristPlaceManagementComponent implements OnInit {
 
     this.touristPlaceForm.reset();
     this.selectedCategoryIds = [];
+    this.cities = [];
 
     this.touristPlaceService
       .getAdminTouristPlaceById(place.id)
       .subscribe({
         next: (details) => {
-
           this.editingTouristPlace = details;
 
           const state = this.states.find(
@@ -347,44 +489,127 @@ export class TouristPlaceManagementComponent implements OnInit {
           });
 
           if (stateId) {
-            this.cityService.getAdminCitiesByStateId(stateId).subscribe({
-              next: (cities) => {
-                this.cities = cities ?? [];
-                this.detailLoading = false;
-                this.showForm = true;
-                this.cdr.detectChanges();
-              },
-              error: (error) => {
-                this.detailLoading = false;
-                this.errorMessage =error.error?.message || 'Unable to load cities.';
-                console.error('Load edit cities failed:', error);
-                this.cdr.detectChanges();
-              }
-            });
+            this.citiesLoading = true;
+
+            this.cityService
+              .getAdminCitiesByStateId(stateId)
+              .subscribe({
+                next: (cities) => {
+                  this.cities = cities ?? [];
+
+                  this.citiesLoading = false;
+                  this.detailLoading = false;
+                  this.showForm = true;
+
+                  this.cdr.detectChanges();
+                },
+
+                error: (error) => {
+                  this.citiesLoading = false;
+                  this.detailLoading = false;
+
+                  this.errorMessage =
+                    error.error?.message ||
+                    'Unable to load cities.';
+
+                  console.error(
+                    'Load edit cities failed:',
+                    error
+                  );
+
+                  this.cdr.detectChanges();
+                }
+              });
           } else {
             this.detailLoading = false;
             this.showForm = true;
+
             this.cdr.detectChanges();
           }
         },
-        error: (error) => {
 
+        error: (error) => {
           this.detailLoading = false;
 
           this.errorMessage =
             error.error?.message ||
             'Unable to load tourist place details. Please try again.';
 
-          console.error('Load tourist place details failed:', error);
+          console.error(
+            'Load tourist place details failed:',
+            error
+          );
+
           this.cdr.detectChanges();
         }
       });
   }
 
+  // ================= VIEW TOURIST PLACE DETAILS =================
+
+  openViewDetails(place: AdminTouristPlace): void {
+    if (
+      this.viewLoading ||
+      this.detailLoading ||
+      this.saving
+    ) {
+      return;
+    }
+
+    this.clearMessages();
+
+    this.viewingTouristPlace = null;
+    this.viewLoading = true;
+
+    this.touristPlaceService
+      .getAdminTouristPlaceById(place.id)
+      .subscribe({
+        next: (details) => {
+          this.viewingTouristPlace = details;
+
+          this.viewLoading = false;
+
+          this.cdr.detectChanges();
+        },
+
+        error: (error) => {
+          this.viewLoading = false;
+
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to load tourist place details.';
+
+          console.error(
+            'View tourist place failed:',
+            error
+          );
+
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  closeViewDetails(): void {
+    this.viewingTouristPlace = null;
+
+    this.cdr.detectChanges();
+  }
+
+  editFromView(): void {
+    if (!this.viewingTouristPlace) {
+      return;
+    }
+
+    const place = this.viewingTouristPlace;
+
+    this.viewingTouristPlace = null;
+
+    this.openEditForm(place);
+  }
+
   // ================= CLOSE FORM =================
 
   closeForm(): void {
-
     if (this.saving || this.detailLoading) {
       return;
     }
@@ -402,7 +627,6 @@ export class TouristPlaceManagementComponent implements OnInit {
   // ================= SAVE TOURIST PLACE =================
 
   saveTouristPlace(): void {
-
     if (this.touristPlaceForm.invalid || this.saving) {
       this.touristPlaceForm.markAllAsTouched();
       return;
@@ -427,9 +651,11 @@ export class TouristPlaceManagementComponent implements OnInit {
       categoryIds: [...this.selectedCategoryIds],
 
       address: formValue.address?.trim() || null,
+
       latitude: formValue.latitude !== null
         ? Number(formValue.latitude)
         : null,
+
       longitude: formValue.longitude !== null
         ? Number(formValue.longitude)
         : null,
@@ -466,7 +692,6 @@ export class TouristPlaceManagementComponent implements OnInit {
 
     request.subscribe({
       next: () => {
-
         this.saving = false;
         this.showForm = false;
         this.editingTouristPlace = null;
@@ -478,11 +703,17 @@ export class TouristPlaceManagementComponent implements OnInit {
 
         this.touristPlaceForm.reset();
 
+        // Newly created records should appear on the first page.
+        if (!isEditing) {
+          this.currentPage = 0;
+        }
+
         this.refreshData();
+
         this.cdr.detectChanges();
       },
-      error: (error) => {
 
+      error: (error) => {
         this.saving = false;
 
         this.errorMessage =
@@ -490,6 +721,7 @@ export class TouristPlaceManagementComponent implements OnInit {
           'Unable to save tourist place. Please try again.';
 
         console.error('Save tourist place failed:', error);
+
         this.cdr.detectChanges();
       }
     });
@@ -498,19 +730,22 @@ export class TouristPlaceManagementComponent implements OnInit {
   // ================= TOGGLE ACTIVE STATUS =================
 
   toggleActive(place: AdminTouristPlace): void {
-
-    if (this.saving || this.detailLoading) {
+    if (
+      this.saving ||
+      this.detailLoading ||
+      this.viewLoading
+    ) {
       return;
     }
 
     this.clearMessages();
+
     this.detailLoading = true;
 
     this.touristPlaceService
       .getAdminTouristPlaceById(place.id)
       .subscribe({
         next: (details) => {
-
           const payload: TouristPlaceRequest = {
             name: details.name,
             slug: details.slug,
@@ -544,7 +779,6 @@ export class TouristPlaceManagementComponent implements OnInit {
             .updateTouristPlace(place.id, payload)
             .subscribe({
               next: () => {
-
                 this.detailLoading = false;
 
                 this.successMessage =
@@ -553,30 +787,39 @@ export class TouristPlaceManagementComponent implements OnInit {
                   } successfully.`;
 
                 this.refreshData();
+
                 this.cdr.detectChanges();
               },
-              error: (error) => {
 
+              error: (error) => {
                 this.detailLoading = false;
 
                 this.errorMessage =
                   error.error?.message ||
                   'Unable to update tourist place status.';
 
-                console.error('Update tourist place status failed:', error);
+                console.error(
+                  'Update tourist place status failed:',
+                  error
+                );
+
                 this.cdr.detectChanges();
               }
             });
         },
-        error: (error) => {
 
+        error: (error) => {
           this.detailLoading = false;
 
           this.errorMessage =
             error.error?.message ||
             'Unable to load tourist place details.';
 
-          console.error('Load tourist place for status update failed:', error);
+          console.error(
+            'Load tourist place for status update failed:',
+            error
+          );
+
           this.cdr.detectChanges();
         }
       });
@@ -585,7 +828,6 @@ export class TouristPlaceManagementComponent implements OnInit {
   // ================= DELETE TOURIST PLACE =================
 
   deleteTouristPlace(place: AdminTouristPlace): void {
-
     const confirmed = window.confirm(
       `Are you sure you want to delete ${place.name}? This action cannot be undone.`
     );
@@ -594,29 +836,47 @@ export class TouristPlaceManagementComponent implements OnInit {
       return;
     }
 
-    this.touristPlaceService.deleteTouristPlace(place.id).subscribe({
-      next: () => {
+    this.clearMessages();
 
-        this.successMessage =
-          `${place.name} deleted successfully.`;
+    this.touristPlaceService
+      .deleteTouristPlace(place.id)
+      .subscribe({
+        next: () => {
+          this.successMessage =
+            `${place.name} deleted successfully.`;
 
-        this.refreshData();
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
+          // If the last row on this page is deleted,
+          // move to the previous page.
+          if (
+            this.touristPlaces.length === 1 &&
+            this.currentPage > 0
+          ) {
+            this.currentPage--;
+          }
 
-        this.errorMessage =
-          error.error?.message || 'Unable to delete tourist place.';
+          this.refreshData();
 
-        console.error('Delete tourist place failed:', error);
-        this.cdr.detectChanges();
-      }
-    });
+          this.cdr.detectChanges();
+        },
+
+        error: (error) => {
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to delete tourist place.';
+
+          console.error(
+            'Delete tourist place failed:',
+            error
+          );
+
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   // ================= REFRESH =================
 
-  private refreshData(): void {
+  refreshData(): void {
     this.loadTouristPlaces();
     this.loadTouristPlaceStats();
   }
@@ -659,4 +919,5 @@ export class TouristPlaceManagementComponent implements OnInit {
   get cityControl() {
     return this.touristPlaceForm.controls.cityId;
   }
+
 }

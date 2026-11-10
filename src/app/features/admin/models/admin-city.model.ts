@@ -10,7 +10,6 @@ export interface AdminCity {
   isActive: boolean;
   createdAt: string;
   updatedAt:string
-
   stateId: number;
   stateName: string;
   stateCode: string | null;

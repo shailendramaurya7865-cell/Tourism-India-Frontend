@@ -1,6 +1,7 @@
 export interface AdminState {
   id: number;
   name: string;
+  code:string;
   imageUrl: string | null;
   tagline: string | null;
   isFeatured: boolean;
@@ -10,7 +11,6 @@ export interface AdminState {
 }
 
 export interface AdminStateDetail extends AdminState {
-  code: string;
   slug: string | null;
   description: string | null;
   config: Record<string, unknown>;

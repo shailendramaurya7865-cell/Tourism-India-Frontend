@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environments';
 import { ApiResponse } from '../models/api-response.model';
 import { State } from '../models/state.model';
+import { PageResponse } from '../../shared/models/page-response.model';
 
 
 import {
@@ -56,9 +57,9 @@ export class StateService {
   // ================= ADMIN APIs =================
 
   // Get lightweight state list for admin table
-  getAdminStates(): Observable<AdminState[]> {
+  getAdminStates(page: number = 0, size: number = 10): Observable<PageResponse<AdminState>> {
     return this.http
-      .get<ApiResponse<AdminState[]> | AdminState[]>(
+      .get<ApiResponse<PageResponse<AdminState>> | PageResponse<AdminState>>(
         this.adminStatesUrl
       )
       .pipe(map(response => this.unwrap(response)));

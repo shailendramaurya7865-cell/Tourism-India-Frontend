@@ -1,3 +1,4 @@
+
 <div class="state-page">
 
   <!-- Page Header -->
@@ -11,62 +12,68 @@
     <button
       class="btn-primary"
       (click)="openAddForm()"
-      [disabled]="detailLoading || saving">
-      <span class="plus-icon">+</span>
+      [disabled]="isLoading || saving || detailLoading">
+      <i class="fa fa-plus"></i>
       Add New State
     </button>
   </div>
 
-  <!-- Notifications -->
+  <!-- Alerts -->
   <div class="alert alert-success" *ngIf="successMessage">
     {{ successMessage }}
-    <button type="button" (click)="successMessage = ''">×</button>
   </div>
 
-  <div class="alert alert-error" *ngIf="errorMessage && !showForm">
+  <div class="alert alert-error" *ngIf="errorMessage">
     {{ errorMessage }}
-    <button type="button" (click)="errorMessage = ''">×</button>
   </div>
 
   <!-- Statistics -->
   <div class="stats-grid">
 
     <div class="stat-card">
-      <div class="stat-icon total-icon">▦</div>
-      <div>
+      <div class="stat-icon total-icon">
+        <i class="fa fa-map"></i>
+      </div>
+      <div class="stat-content">
         <span>Total States</span>
-        <h2>{{ totalCount }}</h2>
+        <h2>{{ stats.totalStates }}</h2>
       </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-icon active-icon">✓</div>
-      <div>
+      <div class="stat-icon active-icon">
+        <i class="fa fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
         <span>Active States</span>
-        <h2>{{ activeCount }}</h2>
+        <h2>{{ stats.activeStates }}</h2>
       </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-icon featured-icon">★</div>
-      <div>
+      <div class="stat-icon featured-icon">
+        <i class="fa fa-star"></i>
+      </div>
+      <div class="stat-content">
         <span>Featured States</span>
-        <h2>{{ featuredCount }}</h2>
+        <h2>{{ stats.featuredStates }}</h2>
       </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-icon inactive-icon">○</div>
-      <div>
+      <div class="stat-icon inactive-icon">
+        <i class="fa fa-ban"></i>
+      </div>
+      <div class="stat-content">
         <span>Inactive States</span>
-        <h2>{{ inactiveCount }}</h2>
+        <h2>{{ stats.inactiveStates }}</h2>
       </div>
     </div>
 
   </div>
 
   <!-- State Table -->
-  <section class="content-card">
+  <div class="content-card">
 
     <div class="table-header">
       <div>
@@ -75,41 +82,40 @@
       </div>
 
       <div class="search-box">
-        <span>⌕</span>
+        <i class="fa fa-search"></i>
         <input
           type="text"
-          placeholder="Search by state name or tagline..."
+          placeholder="Search states..."
           [(ngModel)]="searchTerm"
-          (ngModelChange)="applySearch()"
-        />
+          (ngModelChange)="onSearchChange()">
       </div>
     </div>
 
     <!-- Loading -->
-    <div class="loading-state" *ngIf="loading">
-      Loading states...
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loader"></div>
+      <p>Loading states...</p>
     </div>
 
     <!-- Empty State -->
     <div
       class="empty-state"
-      *ngIf="!loading && filteredStates.length === 0">
+      *ngIf="!isLoading && states.length === 0">
 
-      <div class="empty-icon">▦</div>
-
-      <h3>No states found</h3>
+      <i class="fa fa-map"></i>
+      <h3>No States Found</h3>
 
       <p>
         {{ searchTerm
-          ? 'Try another search term.'
-          : 'Start by adding your first state.' }}
+          ? 'No states match your search. Try another search term.'
+          : 'There are no states available to display.' }}
       </p>
 
       <button
         *ngIf="!searchTerm"
         class="btn-primary"
         (click)="openAddForm()">
-        Add State
+        Add Your First State
       </button>
 
     </div>
@@ -117,59 +123,82 @@
     <!-- Table -->
     <div
       class="table-wrapper"
-      *ngIf="!loading && filteredStates.length > 0">
+      *ngIf="!isLoading && states.length > 0">
 
       <table>
 
         <thead>
           <tr>
-            <th>STATE</th>
-            <th>FEATURED</th>
-            <th>STATUS</th>
-            <th>CREATED ON</th>
-            <th class="action-heading">ACTIONS</th>
+            <th>State</th>
+            <th>Code</th>
+            <th>Created On</th>
+            <th>Updated On</th>
+            <th>Status</th>
+            <th>Featured</th>
+            <th class="actions-column">Actions</th>
           </tr>
         </thead>
 
         <tbody>
 
-          <tr *ngFor="let state of filteredStates">
+          <tr *ngFor="let state of states">
 
             <!-- State Information -->
             <td>
               <div class="state-info">
 
-                <img
-                  *ngIf="state.imageUrl"
-                  [src]="state.imageUrl"
-                  [alt]="state.name"
-                  class="state-image"
-                />
+                <div class="state-image">
+                  <img
+                    *ngIf="state.imageUrl"
+                    [src]="state.imageUrl"
+                    [alt]="state.name">
 
-                <div
-                  *ngIf="!state.imageUrl"
-                  class="state-placeholder">
-                  {{ state.name.charAt(0) }}
+                  <div
+                    class="state-placeholder"
+                    *ngIf="!state.imageUrl">
+                    <i class="fa fa-map-marker-alt"></i>
+                  </div>
                 </div>
 
-                <div>
-                  <strong>{{ state.name }}</strong>
-                  <small>{{ state.tagline || 'No tagline added' }}</small>
+                <div class="state-details">
+                  <span class="state-name">
+                    {{ state.name }}
+                  </span>
+
+                  <span class="state-tagline">
+                    {{ state.tagline || 'No tagline available' }}
+                  </span>
                 </div>
 
               </div>
             </td>
 
-            <!-- Featured -->
+            <!-- State Code -->
             <td>
-              <span
-                class="featured-badge"
-                [class.not-featured]="!state.isFeatured">
-                {{ state.isFeatured ? '★ Featured' : 'Not featured' }}
+              <span class="code-value">
+                {{ state.code || '—' }}
               </span>
             </td>
 
-            <!-- Status -->
+            <!-- Created Date -->
+            <td>
+              <span class="date-value">
+                {{ state.createdAt
+                  ? (state.createdAt | date:'dd MMM yyyy, hh:mm:ss a')
+                  : '—' }}
+              </span>
+            </td>
+
+            <!-- Updated Date -->
+            <td>
+              <span class="date-value">
+                {{ state.updatedAt
+                  ? (state.updatedAt | date:'dd MMM yyyy, hh:mm:ss a')
+                  : '—' }}
+              </span>
+            </td>
+
+            <!-- Active Status -->
             <td>
               <span
                 class="status-badge"
@@ -183,40 +212,45 @@
               </span>
             </td>
 
-            <!-- Created Date -->
+            <!-- Featured Status -->
             <td>
-              {{ state.createdAt | date:'dd MMM yyyy' }}
+              <span
+                class="featured-badge"
+                [class.not-featured]="!state.isFeatured">
+
+                <i class="fa fa-star"></i>
+
+                {{ state.isFeatured ? 'Featured' : 'No' }}
+
+              </span>
             </td>
 
-            <!-- Actions -->
+            <!-- Actions: View and Edit Only -->
             <td>
               <div class="action-buttons">
 
                 <button
                   type="button"
+                  class="action-btn view-btn"
+                  title="View State"
+                  [disabled]="viewLoading || detailLoading || saving"
+                  (click)="viewState(state.id)">
+
+                  <i class="fa fa-eye"></i>
+                  <span>View</span>
+
+                </button>
+
+                <button
+                  type="button"
                   class="action-btn edit-btn"
-                  title="Edit state"
-                  [disabled]="detailLoading || saving"
+                  title="Edit State"
+                  [disabled]="detailLoading || saving || viewLoading"
                   (click)="openEditForm(state)">
-                  ✎
-                </button>
 
-                <button
-                  type="button"
-                  class="action-btn toggle-btn"
-                  [title]="state.isActive ? 'Deactivate state' : 'Activate state'"
-                  [disabled]="detailLoading || saving"
-                  (click)="toggleActive(state)">
-                  {{ state.isActive ? '◉' : '○' }}
-                </button>
+                  <i class="fa fa-edit"></i>
+                  <span>Edit</span>
 
-                <button
-                  type="button"
-                  class="action-btn delete-btn"
-                  title="Delete state"
-                  [disabled]="detailLoading || saving"
-                  (click)="deleteState(state)">
-                  🗑
                 </button>
 
               </div>
@@ -230,36 +264,116 @@
 
     </div>
 
-    <!-- Table Footer -->
+    <!-- Pagination -->
     <div
-      class="table-footer"
-      *ngIf="!loading && filteredStates.length > 0">
+      class="table-footer pagination-footer"
+      *ngIf="!isLoading && totalElements > 0">
 
-      Showing {{ filteredStates.length }} of {{ states.length }} states
+      <!-- Pagination Information -->
+      <div class="pagination-info">
+
+        Showing
+
+        <strong>
+          {{ (currentPage * pageSize) + 1 }}
+        </strong>
+
+        to
+
+        <strong>
+          {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
+        </strong>
+
+        of
+
+        <strong>{{ totalElements }}</strong>
+
+        states
+
+      </div>
+
+      <!-- Page Size -->
+      <div class="page-size-selector">
+
+        <label>Rows per page</label>
+
+        <select
+          [ngModel]="pageSize"
+          (ngModelChange)="onPageSizeChange($event)">
+
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+
+        </select>
+
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-controls">
+
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="currentPage === 0 || isLoading"
+          (click)="previousPage()">
+
+          <i class="fa fa-chevron-left"></i>
+
+        </button>
+
+        <button
+          type="button"
+          class="page-number"
+          *ngFor="let page of pages"
+          [class.active-page]="currentPage === page"
+          [disabled]="isLoading"
+          (click)="goToPage(page)">
+
+          {{ page + 1 }}
+
+        </button>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="currentPage >= totalPages - 1 || isLoading"
+          (click)="nextPage()">
+
+          <i class="fa fa-chevron-right"></i>
+
+        </button>
+
+      </div>
 
     </div>
 
-  </section>
+  </div>
 
 </div>
 
 
-<!-- ADD / EDIT STATE MODAL -->
+<!-- ====================================== -->
+<!-- ADD / EDIT STATE MODAL                 -->
+<!-- ====================================== -->
+
 <div
   class="modal-backdrop"
-  *ngIf="showForm || detailLoading"
+  *ngIf="showForm || (detailLoading && !viewingState)"
   (click)="closeForm()">
 
   <div
     class="state-modal"
     (click)="$event.stopPropagation()">
 
-    <!-- Loading State Details -->
+    <!-- Loading Details -->
     <div
       class="loading-state"
       *ngIf="detailLoading && !showForm">
 
-      Loading state details...
+      <div class="loader"></div>
+      <p>Loading state details...</p>
 
     </div>
 
@@ -270,10 +384,12 @@
       <div class="modal-header">
 
         <div>
-          <h2>{{ editingState ? 'Edit State' : 'Add New State' }}</h2>
+          <h2>
+            {{ isEditMode ? 'Edit State' : 'Add New State' }}
+          </h2>
 
           <p>
-            {{ editingState
+            {{ isEditMode
               ? 'Update the state information below.'
               : 'Enter the details to add a new state.' }}
           </p>
@@ -284,11 +400,14 @@
           class="close-btn"
           [disabled]="saving"
           (click)="closeForm()">
+
           ×
+
         </button>
 
       </div>
 
+      <!-- State Form -->
       <form
         [formGroup]="stateForm"
         (ngSubmit)="saveState()">
@@ -300,13 +419,14 @@
             <!-- State Name -->
             <div class="form-group">
 
-              <label>State Name <span>*</span></label>
+              <label>
+                State Name <span>*</span>
+              </label>
 
               <input
                 type="text"
                 formControlName="name"
-                placeholder="e.g. Rajasthan"
-              />
+                placeholder="e.g. Rajasthan">
 
               <small
                 class="validation-error"
@@ -321,13 +441,14 @@
             <!-- State Code -->
             <div class="form-group">
 
-              <label>State Code <span>*</span></label>
+              <label>
+                State Code <span>*</span>
+              </label>
 
               <input
                 type="text"
                 formControlName="code"
-                placeholder="e.g. RJ"
-              />
+                placeholder="e.g. RJ">
 
               <small
                 class="validation-error"
@@ -347,8 +468,7 @@
               <input
                 type="text"
                 formControlName="slug"
-                placeholder="e.g. rajasthan"
-              />
+                placeholder="e.g. rajasthan">
 
             </div>
 
@@ -360,8 +480,7 @@
               <input
                 type="text"
                 formControlName="tagline"
-                placeholder="e.g. The Land of Kings"
-              />
+                placeholder="e.g. The Land of Kings">
 
             </div>
 
@@ -373,8 +492,7 @@
               <input
                 type="url"
                 formControlName="imageUrl"
-                placeholder="https://example.com/image.jpg"
-              />
+                placeholder="https://example.com/image.jpg">
 
             </div>
 
@@ -398,33 +516,37 @@
 
             <h3>Publishing Settings</h3>
 
+            <!-- Active -->
             <label class="switch-row">
 
               <div>
                 <strong>Active State</strong>
-                <small>Make this state visible on the public website.</small>
+                <small>
+                  Make this state visible on the public website.
+                </small>
               </div>
 
               <input
                 type="checkbox"
-                formControlName="isActive"
-              />
+                formControlName="isActive">
 
               <span class="switch"></span>
 
             </label>
 
+            <!-- Featured -->
             <label class="switch-row">
 
               <div>
                 <strong>Featured State</strong>
-                <small>Highlight this state in featured destinations.</small>
+                <small>
+                  Highlight this state in featured destinations.
+                </small>
               </div>
 
               <input
                 type="checkbox"
-                formControlName="isFeatured"
-              />
+                formControlName="isFeatured">
 
               <span class="switch"></span>
 
@@ -433,8 +555,12 @@
           </div>
 
           <!-- Form Error -->
-          <div class="alert alert-error" *ngIf="errorMessage">
+          <div
+            class="alert alert-error"
+            *ngIf="errorMessage">
+
             {{ errorMessage }}
+
           </div>
 
         </div>
@@ -445,25 +571,237 @@
           <button
             type="button"
             class="btn-secondary"
-            [disabled]="saving"
+            [disabled]="saving || detailLoading"
             (click)="closeForm()">
+
             Cancel
+
           </button>
 
           <button
             type="submit"
             class="btn-primary"
-            [disabled]="saving">
+            [disabled]="saving || detailLoading">
 
             {{ saving
               ? 'Saving...'
-              : (editingState ? 'Update State' : 'Create State') }}
+              : (isEditMode ? 'Update State' : 'Create State') }}
 
           </button>
 
         </div>
 
       </form>
+
+    </ng-container>
+
+  </div>
+
+</div>
+
+
+<!-- ====================================== -->
+<!-- VIEW STATE DETAILS MODAL               -->
+<!-- ====================================== -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="showViewModal"
+  (click)="closeViewModal()">
+
+  <div
+    class="state-modal view-modal"
+    (click)="$event.stopPropagation()">
+
+    <!-- Loading -->
+    <div
+      class="loading-state"
+      *ngIf="viewLoading">
+
+      <div class="loader"></div>
+      <p>Loading state details...</p>
+
+    </div>
+
+    <!-- Details -->
+    <ng-container *ngIf="selectedState as state">
+
+      <!-- Header -->
+      <div class="modal-header">
+
+        <div>
+          <h2>State Details</h2>
+          <p>Complete information about this state.</p>
+        </div>
+
+        <button
+          type="button"
+          class="close-btn"
+          (click)="closeViewModal()">
+
+          ×
+
+        </button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <!-- State Image -->
+        <div class="view-state-image">
+
+          <img
+            *ngIf="state.imageUrl"
+            [src]="state.imageUrl"
+            [alt]="state.name">
+
+          <div
+            class="state-placeholder"
+            *ngIf="!state.imageUrl">
+
+            <i class="fa fa-map"></i>
+
+          </div>
+
+        </div>
+
+        <!-- Basic Information -->
+        <div class="details-section">
+
+          <h3>Basic Information</h3>
+
+          <div class="details-grid">
+
+            <div class="detail-item">
+              <label>State Name</label>
+              <strong>{{ state.name }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <label>State Code</label>
+              <strong>{{ state.code || '—' }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <label>Slug</label>
+              <strong>{{ state.slug || '—' }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <label>Tagline</label>
+              <strong>{{ state.tagline || '—' }}</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Description -->
+        <div class="details-section">
+
+          <h3>Description</h3>
+
+          <p class="description-text">
+            {{ state.description || 'No description available.' }}
+          </p>
+
+        </div>
+
+        <!-- Publishing Information -->
+        <div class="details-section">
+
+          <h3>Publishing Information</h3>
+
+          <div class="details-grid">
+
+            <div class="detail-item">
+              <label>Status</label>
+
+              <span
+                class="status-badge"
+                [class.active]="state.isActive"
+                [class.inactive]="!state.isActive">
+
+                <span class="status-dot"></span>
+
+                {{ state.isActive ? 'Active' : 'Inactive' }}
+
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <label>Featured</label>
+
+              <span
+                class="featured-badge"
+                [class.not-featured]="!state.isFeatured">
+
+                <i class="fa fa-star"></i>
+
+                {{ state.isFeatured ? 'Featured' : 'No' }}
+
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Timestamps -->
+        <div class="details-section">
+
+          <h3>Record Information</h3>
+
+          <div class="details-grid">
+
+            <div class="detail-item">
+              <label>Created At</label>
+              <strong>
+                {{ state.createdAt
+                  ? (state.createdAt | date:'dd MMM yyyy, hh:mm:ss a')
+                  : '—' }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <label>Updated At</label>
+              <strong>
+                {{ state.updatedAt
+                  ? (state.updatedAt | date:'dd MMM yyyy, hh:mm:ss a')
+                  : '—' }}
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="closeViewModal()">
+
+          Close
+
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="detailLoading || saving"
+          (click)="editFromView()">
+
+          <i class="fa fa-edit"></i>
+          Edit State
+
+        </button>
+
+      </div>
 
     </ng-container>
 

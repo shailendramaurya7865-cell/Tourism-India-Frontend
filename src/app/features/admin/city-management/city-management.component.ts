@@ -237,10 +237,9 @@ export class CityManagementComponent implements OnInit {
   loadStates(): void {
 
     this.stateService.getAdminStates().subscribe({
+      next: (response) => {
 
-      next: (states) => {
-
-        this.states = (states ?? []).filter(
+        this.states = (response.content ?? []).filter(
           state => state.isActive
         );
 

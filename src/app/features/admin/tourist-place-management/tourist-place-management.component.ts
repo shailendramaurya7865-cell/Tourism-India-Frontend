@@ -229,8 +229,8 @@ export class TouristPlaceManagementComponent implements OnInit {
 
   loadStates(): void {
     this.stateService.getAdminStates().subscribe({
-      next: (states) => {
-        this.states = states ?? [];
+      next: (response) => {
+        this.states = response.content ?? [];
 
         this.cdr.detectChanges();
       },

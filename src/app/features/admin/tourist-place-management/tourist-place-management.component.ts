@@ -270,8 +270,7 @@ export class TouristPlaceManagementComponent implements OnInit {
     this.filteredTouristPlaces = this.touristPlaces.filter(place =>
       (place.name ?? '').toLowerCase().includes(term) ||
       (place.cityName ?? '').toLowerCase().includes(term) ||
-      (place.stateName ?? '').toLowerCase().includes(term) ||
-      (place.tagline ?? '').toLowerCase().includes(term)
+      (place.stateName ?? '').toLowerCase().includes(term)
     );
   }
 

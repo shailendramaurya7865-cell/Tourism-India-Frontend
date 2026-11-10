@@ -72,284 +72,264 @@
 
   </div>
 
-  <!-- State Table -->
-  <div class="content-card">
+ 
+<!-- State Table -->
+<section class="content-card">
 
-    <div class="table-header">
-      <div>
-        <h2>All States</h2>
-        <p>View and manage all registered states.</p>
-      </div>
-
-      <div class="search-box">
-        <i class="fa fa-search"></i>
-        <input
-          type="text"
-          placeholder="Search states..."
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange()">
-      </div>
+  <div class="table-header">
+    <div>
+      <h2>All States</h2>
+      <p>View and manage all registered states.</p>
     </div>
 
-    <!-- Loading -->
-    <div class="loading-state" *ngIf="isLoading">
-      <div class="loader"></div>
-      <p>Loading states...</p>
+    <div class="search-box">
+      <i class="fa fa-search"></i>
+      <input
+        type="text"
+        placeholder="Search by state name..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()">
     </div>
+  </div>
 
-    <!-- Empty State -->
-    <div
-      class="empty-state"
-      *ngIf="!isLoading && states.length === 0">
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loader"></div>
+    <p>Loading states...</p>
+  </div>
 
+  <!-- Empty State -->
+  <div
+    class="empty-state"
+    *ngIf="!isLoading && states.length === 0">
+
+    <div class="empty-icon">
       <i class="fa fa-map"></i>
-      <h3>No States Found</h3>
+    </div>
 
-      <p>
-        {{ searchTerm
-          ? 'No states match your search. Try another search term.'
-          : 'There are no states available to display.' }}
-      </p>
+    <h3>No States Found</h3>
 
+    <p>
+      {{ searchTerm
+        ? 'No states match your search. Try another search term.'
+        : 'Start by adding your first state.' }}
+    </p>
+
+    <button
+      *ngIf="!searchTerm"
+      type="button"
+      class="btn-primary"
+      (click)="openAddForm()">
+      Add State
+    </button>
+
+  </div>
+
+  <!-- Table -->
+  <div
+    class="table-wrapper"
+    *ngIf="!isLoading && states.length > 0">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>STATE</th>
+          <th>CREATED AT</th>
+          <th>UPDATED AT</th>
+          <th>STATUS</th>
+          <th>FEATURED</th>
+          <th class="action-heading">ACTIONS</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr *ngFor="let state of states">
+
+          <!-- State Information -->
+          <td>
+            <div class="state-info">
+
+              <!-- State Image -->
+              <img
+                *ngIf="state.imageUrl"
+                [src]="state.imageUrl"
+                [alt]="state.name"
+                class="state-image"
+                (error)="state.imageUrl = null">
+
+              <!-- Initial Letter Fallback -->
+              <div
+                *ngIf="!state.imageUrl"
+                class="state-placeholder">
+
+                {{ state.name?.trim()?.charAt(0)?.toUpperCase() || '?' }}
+
+              </div>
+
+              <!-- State Name -->
+              <div class="state-details">
+                <strong>{{ state.name }}</strong>
+              </div>
+
+            </div>
+          </td>
+
+          <!-- Created At -->
+          <td>
+            {{ state.createdAt
+              ? (state.createdAt | date:'dd MMM yyyy')
+              : '—' }}
+          </td>
+
+          <!-- Updated At -->
+          <td>
+            {{ state.updatedAt
+              ? (state.updatedAt | date:'dd MMM yyyy')
+              : '—' }}
+          </td>
+
+          <!-- Status -->
+          <td>
+            <span
+              class="status-badge"
+              [class.active]="state.isActive"
+              [class.inactive]="!state.isActive">
+
+              <span class="status-dot"></span>
+
+              {{ state.isActive ? 'Active' : 'Inactive' }}
+
+            </span>
+          </td>
+
+          <!-- Featured -->
+          <td>
+            <span
+              class="featured-status"
+              [class.is-featured]="state.isFeatured">
+
+              <span>
+                {{ state.isFeatured ? '★' : '☆' }}
+              </span>
+
+              {{ state.isFeatured ? 'Featured' : 'No' }}
+
+            </span>
+          </td>
+
+          <!-- Actions -->
+          <td>
+            <div class="action-buttons">
+
+              <!-- View -->
+              <button
+                type="button"
+                class="action-btn view-btn"
+                title="View state"
+                [disabled]="viewLoading || detailLoading || saving"
+                (click)="viewState(state.id)">
+
+                <i class="fa fa-eye"></i>
+
+              </button>
+
+              <!-- Edit -->
+              <button
+                type="button"
+                class="action-btn edit-btn"
+                title="Edit state"
+                [disabled]="detailLoading || saving || viewLoading"
+                (click)="openEditForm(state)">
+
+                <i class="fa fa-edit"></i>
+
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <!-- Pagination Footer -->
+  <div
+    class="table-footer"
+    *ngIf="!isLoading && totalElements > 0">
+
+    <div class="pagination-info">
+
+      Showing
+      {{ (currentPage * pageSize) + 1 }}
+      -
+      {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
+      of {{ totalElements }} states
+
+    </div>
+
+    <!-- Page Size -->
+    <div class="pagination-controls">
+
+      <label for="statePageSize">Rows per page:</label>
+
+      <select
+        id="statePageSize"
+        [ngModel]="pageSize"
+        (ngModelChange)="onPageSizeChange($event)"
+        [disabled]="isLoading">
+
+        <option [ngValue]="5">5</option>
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="20">20</option>
+        <option [ngValue]="50">50</option>
+
+      </select>
+
+      <!-- Previous -->
       <button
-        *ngIf="!searchTerm"
-        class="btn-primary"
-        (click)="openAddForm()">
-        Add Your First State
+        type="button"
+        class="pagination-btn"
+        title="Previous page"
+        [disabled]="currentPage === 0 || isLoading"
+        (click)="previousPage()">
+        ‹
+      </button>
+
+      <!-- Page Numbers -->
+      <button
+        type="button"
+        class="pagination-btn"
+        *ngFor="let page of pages"
+        [class.active]="currentPage === page"
+        [disabled]="isLoading"
+        (click)="goToPage(page)">
+
+        {{ page + 1 }}
+
+      </button>
+
+      <!-- Next -->
+      <button
+        type="button"
+        class="pagination-btn"
+        title="Next page"
+        [disabled]="currentPage >= totalPages - 1 || isLoading"
+        (click)="nextPage()">
+        ›
       </button>
 
     </div>
 
-    <!-- Table -->
-    <div
-      class="table-wrapper"
-      *ngIf="!isLoading && states.length > 0">
-
-      <table>
-
-        <thead>
-          <tr>
-            <th>State</th>
-            <th>Code</th>
-            <th>Created On</th>
-            <th>Updated On</th>
-            <th>Status</th>
-            <th>Featured</th>
-            <th class="actions-column">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          <tr *ngFor="let state of states">
-
-            <!-- State Information -->
-            <td>
-              <div class="state-info">
-
-                <div class="state-image">
-                  <img
-                    *ngIf="state.imageUrl"
-                    [src]="state.imageUrl"
-                    [alt]="state.name">
-
-                  <div
-                    class="state-placeholder"
-                    *ngIf="!state.imageUrl">
-                    <i class="fa fa-map-marker-alt"></i>
-                  </div>
-                </div>
-
-                <div class="state-details">
-                  <span class="state-name">
-                    {{ state.name }}
-                  </span>
-
-                  <span class="state-tagline">
-                    {{ state.tagline || 'No tagline available' }}
-                  </span>
-                </div>
-
-              </div>
-            </td>
-
-            <!-- State Code -->
-            <td>
-              <span class="code-value">
-                {{ state.code || '—' }}
-              </span>
-            </td>
-
-            <!-- Created Date -->
-            <td>
-              <span class="date-value">
-                {{ state.createdAt
-                  ? (state.createdAt | date:'dd MMM yyyy, hh:mm:ss a')
-                  : '—' }}
-              </span>
-            </td>
-
-            <!-- Updated Date -->
-            <td>
-              <span class="date-value">
-                {{ state.updatedAt
-                  ? (state.updatedAt | date:'dd MMM yyyy, hh:mm:ss a')
-                  : '—' }}
-              </span>
-            </td>
-
-            <!-- Active Status -->
-            <td>
-              <span
-                class="status-badge"
-                [class.active]="state.isActive"
-                [class.inactive]="!state.isActive">
-
-                <span class="status-dot"></span>
-
-                {{ state.isActive ? 'Active' : 'Inactive' }}
-
-              </span>
-            </td>
-
-            <!-- Featured Status -->
-            <td>
-              <span
-                class="featured-badge"
-                [class.not-featured]="!state.isFeatured">
-
-                <i class="fa fa-star"></i>
-
-                {{ state.isFeatured ? 'Featured' : 'No' }}
-
-              </span>
-            </td>
-
-            <!-- Actions: View and Edit Only -->
-            <td>
-              <div class="action-buttons">
-
-                <button
-                  type="button"
-                  class="action-btn view-btn"
-                  title="View State"
-                  [disabled]="viewLoading || detailLoading || saving"
-                  (click)="viewState(state.id)">
-
-                  <i class="fa fa-eye"></i>
-                  <span>View</span>
-
-                </button>
-
-                <button
-                  type="button"
-                  class="action-btn edit-btn"
-                  title="Edit State"
-                  [disabled]="detailLoading || saving || viewLoading"
-                  (click)="openEditForm(state)">
-
-                  <i class="fa fa-edit"></i>
-                  <span>Edit</span>
-
-                </button>
-
-              </div>
-            </td>
-
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-    <!-- Pagination -->
-    <div
-      class="table-footer pagination-footer"
-      *ngIf="!isLoading && totalElements > 0">
-
-      <!-- Pagination Information -->
-      <div class="pagination-info">
-
-        Showing
-
-        <strong>
-          {{ (currentPage * pageSize) + 1 }}
-        </strong>
-
-        to
-
-        <strong>
-          {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
-        </strong>
-
-        of
-
-        <strong>{{ totalElements }}</strong>
-
-        states
-
-      </div>
-
-      <!-- Page Size -->
-      <div class="page-size-selector">
-
-        <label>Rows per page</label>
-
-        <select
-          [ngModel]="pageSize"
-          (ngModelChange)="onPageSizeChange($event)">
-
-          <option [ngValue]="5">5</option>
-          <option [ngValue]="10">10</option>
-          <option [ngValue]="20">20</option>
-          <option [ngValue]="50">50</option>
-
-        </select>
-
-      </div>
-
-      <!-- Pagination Controls -->
-      <div class="pagination-controls">
-
-        <button
-          type="button"
-          class="pagination-btn"
-          [disabled]="currentPage === 0 || isLoading"
-          (click)="previousPage()">
-
-          <i class="fa fa-chevron-left"></i>
-
-        </button>
-
-        <button
-          type="button"
-          class="page-number"
-          *ngFor="let page of pages"
-          [class.active-page]="currentPage === page"
-          [disabled]="isLoading"
-          (click)="goToPage(page)">
-
-          {{ page + 1 }}
-
-        </button>
-
-        <button
-          type="button"
-          class="pagination-btn"
-          [disabled]="currentPage >= totalPages - 1 || isLoading"
-          (click)="nextPage()">
-
-          <i class="fa fa-chevron-right"></i>
-
-        </button>
-
-      </div>
-
-    </div>
-
   </div>
+
+</section>
+
 
 </div>
 

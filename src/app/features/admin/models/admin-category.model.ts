@@ -4,6 +4,7 @@ export interface AdminCategory {
   slug: string;
   iconUrl: string | null;
   isActive: boolean;
+  isFeatured: boolean;
   touristPlaceCount:number,
   createdAt: string;
   updatedAt: string;

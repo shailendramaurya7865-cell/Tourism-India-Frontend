@@ -67,255 +67,260 @@
 
   </div>
 
-  <!-- Category Table -->
-  <section class="content-card">
+  
 
-    <div class="table-header">
-      <div>
-        <h2>All Categories</h2>
-        <p>View and manage all registered tourist place categories.</p>
-      </div>
+<!-- Category Table -->
+<section class="content-card">
 
-      <div class="search-box">
-        <span>⌕</span>
-        <input
-          type="text"
-          placeholder="Search by category name or slug..."
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange()"
-        />
-      </div>
+  <div class="table-header">
+    <div>
+      <h2>All Categories</h2>
+      <p>View and manage all registered tourist place categories.</p>
     </div>
 
-    <!-- Loading -->
-    <div class="loading-state" *ngIf="loading">
-      Loading categories...
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        placeholder="Search by category name..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+      />
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    Loading categories...
+  </div>
+
+  <!-- Empty State -->
+  <div
+    class="empty-state"
+    *ngIf="!loading && categories.length === 0">
+
+    <div class="empty-icon">▦</div>
+
+    <h3>No categories found</h3>
+
+    <p>
+      {{ searchTerm
+        ? 'No categories match your search.'
+        : 'Start by adding your first category.' }}
+    </p>
+
+    <button
+      *ngIf="!searchTerm"
+      type="button"
+      class="btn-primary"
+      (click)="openAddForm()">
+      Add Category
+    </button>
+
+  </div>
+
+  <!-- Table -->
+  <div
+    class="table-wrapper"
+    *ngIf="!loading && categories.length > 0">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>CATEGORY</th>
+          <th>PLACES</th>
+          <th>CREATED AT</th>
+          <th>UPDATED AT</th>
+          <th>STATUS</th>
+          <th>FEATURED</th>
+          <th class="action-heading">ACTIONS</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr *ngFor="let category of categories">
+
+          <!-- Category Information -->
+          <td>
+            <div class="category-info">
+
+              <!-- Show Icon Image -->
+              <img
+                *ngIf="category.iconUrl"
+                [src]="category.iconUrl"
+                [alt]="category.name"
+                class="category-image"
+                (error)="category.iconUrl = null"
+              />
+
+              <!-- Show Initial Letter When Image Is Missing -->
+              <div
+                *ngIf="!category.iconUrl"
+                class="category-placeholder">
+
+                {{ category.name?.trim()?.charAt(0)?.toUpperCase() || '?' }}
+
+              </div>
+
+              <!-- Category Name -->
+              <div class="category-details">
+                <strong>{{ category.name }}</strong>
+              </div>
+
+            </div>
+          </td>
+
+          <!-- Tourist Places Count -->
+          <td>
+            <span class="featured-badge">
+              {{ category.touristPlaceCount ?? 0 }} Places
+            </span>
+          </td>
+
+          <!-- Created At -->
+          <td>
+            {{ category.createdAt
+              ? (category.createdAt | date:'dd MMM yyyy')
+              : '—' }}
+          </td>
+
+          <!-- Updated At -->
+          <td>
+            {{ category.updatedAt
+              ? (category.updatedAt | date:'dd MMM yyyy')
+              : '—' }}
+          </td>
+
+          <!-- Status -->
+          <td>
+            <span
+              class="status-badge"
+              [class.active]="category.isActive"
+              [class.inactive]="!category.isActive">
+
+              <span class="status-dot"></span>
+
+              {{ category.isActive ? 'Active' : 'Inactive' }}
+
+            </span>
+          </td>
+
+          <!-- Featured -->
+          <td>
+            <span
+              class="featured-status"
+              [class.is-featured]="category.isFeatured">
+
+              <span>
+                {{ category.isFeatured ? '★' : '☆' }}
+              </span>
+
+              {{ category.isFeatured ? 'Featured' : 'No' }}
+
+            </span>
+          </td>
+
+          <!-- Actions -->
+          <td>
+            <div class="action-buttons">
+
+              <!-- View -->
+              <button
+                type="button"
+                class="action-btn view-btn"
+                title="View category"
+                [disabled]="detailLoading || saving || viewLoading"
+                (click)="openViewDetails(category)">
+                👁
+              </button>
+
+              <!-- Edit -->
+              <button
+                type="button"
+                class="action-btn edit-btn"
+                title="Edit category"
+                [disabled]="detailLoading || saving || viewLoading"
+                (click)="openEditForm(category)">
+                ✎
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <!-- Pagination Footer -->
+  <div
+    class="table-footer"
+    *ngIf="!loading && categories.length > 0">
+
+    <div class="pagination-info">
+      Showing
+      {{ totalElements === 0 ? 0 : (currentPage * pageSize) + 1 }}
+      -
+      {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
+      of {{ totalElements }} categories
     </div>
 
-    <!-- Empty State -->
-    <div
-      class="empty-state"
-      *ngIf="!loading && categories.length === 0">
+    <div class="pagination-controls">
 
-      <div class="empty-icon">▦</div>
+      <label for="categoryPageSize">Rows per page:</label>
 
-      <h3>No categories found</h3>
+      <select
+        id="categoryPageSize"
+        [ngModel]="pageSize"
+        (ngModelChange)="onPageSizeChange($event)"
+        [disabled]="loading">
 
-      <p>
-        {{ searchTerm
-          ? 'No categories match your search.'
-          : 'Start by adding your first category.' }}
-      </p>
+        <option
+          *ngFor="let size of pageSizeOptions"
+          [ngValue]="size">
+          {{ size }}
+        </option>
+
+      </select>
 
       <button
-        *ngIf="!searchTerm"
         type="button"
-        class="btn-primary"
-        (click)="openAddForm()">
-        Add Category
+        class="pagination-btn"
+        title="Previous page"
+        [disabled]="currentPage === 0 || loading"
+        (click)="previousPage()">
+        ‹
+      </button>
+
+      <button
+        *ngFor="let page of pages"
+        type="button"
+        class="pagination-btn"
+        [class.active]="currentPage === page"
+        [disabled]="loading"
+        (click)="goToPage(page)">
+        {{ page + 1 }}
+      </button>
+
+      <button
+        type="button"
+        class="pagination-btn"
+        title="Next page"
+        [disabled]="currentPage >= totalPages - 1 || loading"
+        (click)="nextPage()">
+        ›
       </button>
 
     </div>
 
-    <!-- Table -->
-    <div
-      class="table-wrapper"
-      *ngIf="!loading && categories.length > 0">
+  </div>
 
-      <table>
-
-        <thead>
-          <tr>
-            <th>CATEGORY</th>
-            <th>SLUG</th>
-            <th>PLACES</th>
-            <th>STATUS</th>
-            <th>CREATED ON</th>
-            <th class="action-heading">ACTIONS</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          <tr *ngFor="let category of categories">
-
-            <!-- Category Information -->
-            <td>
-              <div class="state-info">
-
-                <img
-                  *ngIf="category.iconUrl"
-                  [src]="category.iconUrl"
-                  [alt]="category.name"
-                  class="state-image"
-                />
-
-                <div
-                  *ngIf="!category.iconUrl"
-                  class="state-placeholder">
-                  {{ category.name.charAt(0).toUpperCase() }}
-                </div>
-
-                <div>
-                  <strong>{{ category.name }}</strong>
-                  <small>Tourist Place Category</small>
-                </div>
-
-              </div>
-            </td>
-
-            <!-- Slug -->
-            <td>
-              <div class="state-column">
-                <strong>{{ category.slug || '—' }}</strong>
-              </div>
-            </td>
-
-            <!-- Tourist Places Count -->
-            <td>
-              <span class="featured-badge">
-                {{ category.touristPlaceCount ?? 0 }} Places
-              </span>
-            </td>
-
-            <!-- Status -->
-            <td>
-              <span
-                class="status-badge"
-                [class.active]="category.isActive"
-                [class.inactive]="!category.isActive">
-
-                <span class="status-dot"></span>
-
-                {{ category.isActive ? 'Active' : 'Inactive' }}
-
-              </span>
-            </td>
-
-            <!-- Created Date -->
-            <td>
-              {{ category.createdAt | date:'dd MMM yyyy' }}
-            </td>
-
-            <!-- Actions -->
-            <td>
-              <div class="action-buttons">
-
-                <!-- View -->
-                <button
-                  type="button"
-                  class="action-btn view-btn"
-                  title="View category"
-                  [disabled]="detailLoading || saving || viewLoading"
-                  (click)="openViewDetails(category)">
-                  👁
-                </button>
-
-                <!-- Edit -->
-                <button
-                  type="button"
-                  class="action-btn edit-btn"
-                  title="Edit category"
-                  [disabled]="detailLoading || saving || viewLoading"
-                  (click)="openEditForm(category)">
-                  ✎
-                </button>
-
-                <!-- Toggle Status -->
-                <button
-                  type="button"
-                  class="action-btn toggle-btn"
-                  [title]="category.isActive ? 'Deactivate category' : 'Activate category'"
-                  [disabled]="detailLoading || saving || viewLoading"
-                  (click)="toggleActive(category)">
-                  {{ category.isActive ? '◉' : '○' }}
-                </button>
-
-                <!-- Delete -->
-                <button
-                  type="button"
-                  class="action-btn delete-btn"
-                  title="Delete category"
-                  [disabled]="detailLoading || saving || viewLoading || deleting"
-                  (click)="deleteCategory(category)">
-                  🗑
-                </button>
-
-              </div>
-            </td>
-
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-    <!-- Pagination Footer -->
-    <div
-      class="table-footer"
-      *ngIf="!loading && categories.length > 0">
-
-      <div class="pagination-info">
-        Showing
-        {{ totalElements === 0 ? 0 : (currentPage * pageSize) + 1 }}
-        -
-        {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
-        of {{ totalElements }} categories
-      </div>
-
-      <div class="pagination-controls">
-
-        <label for="categoryPageSize">Rows per page:</label>
-
-        <select
-          id="categoryPageSize"
-          [ngModel]="pageSize"
-          (ngModelChange)="onPageSizeChange($event)"
-          [disabled]="loading">
-
-          <option
-            *ngFor="let size of pageSizeOptions"
-            [ngValue]="size">
-            {{ size }}
-          </option>
-
-        </select>
-
-        <button
-          type="button"
-          class="pagination-btn"
-          title="Previous page"
-          [disabled]="currentPage === 0 || loading"
-          (click)="previousPage()">
-          ‹
-        </button>
-
-        <button
-          *ngFor="let page of pages"
-          type="button"
-          class="pagination-btn"
-          [class.active]="currentPage === page"
-          [disabled]="loading"
-          (click)="goToPage(page)">
-          {{ page + 1 }}
-        </button>
-
-        <button
-          type="button"
-          class="pagination-btn"
-          title="Next page"
-          [disabled]="currentPage >= totalPages - 1 || loading"
-          (click)="nextPage()">
-          ›
-        </button>
-
-      </div>
-
-    </div>
-
-  </section>
+</section>
 
 </div>
 

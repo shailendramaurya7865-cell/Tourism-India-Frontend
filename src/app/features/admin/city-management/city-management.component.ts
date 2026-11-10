@@ -42,14 +42,13 @@ export class CityManagementComponent implements OnInit {
 
   private readonly cityService = inject(CityService);
   private readonly stateService = inject(StateService);
-
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
 
   // ================= DATA =================
 
   cities: AdminCity[] = [];
-  filteredCities: AdminCity[] = [];
+  private pageCities: AdminCity[] = [];
 
   states: AdminState[] = [];
 
@@ -72,7 +71,7 @@ export class CityManagementComponent implements OnInit {
 
   readonly Math = Math;
 
-  get pageNumbers(): number[] {
+  get pages(): number[] {
     return Array.from(
       { length: this.totalPages },
       (_, index) => index
@@ -85,6 +84,20 @@ export class CityManagementComponent implements OnInit {
   saving = false;
   detailLoading = false;
   viewLoading = false;
+
+  // HTML-compatible aliases
+
+  get isLoading(): boolean {
+    return this.loading;
+  }
+
+  get isSaving(): boolean {
+    return this.saving;
+  }
+
+  get isViewLoading(): boolean {
+    return this.viewLoading;
+  }
 
   // ================= MESSAGES =================
 
@@ -100,8 +113,25 @@ export class CityManagementComponent implements OnInit {
   showForm = false;
 
   editingCity: AdminCityDetail | null = null;
-
   viewingCity: AdminCityDetail | null = null;
+
+  // HTML-compatible aliases
+
+  get showFormModal(): boolean {
+    return this.showForm;
+  }
+
+  get showViewModal(): boolean {
+    return this.viewLoading || this.viewingCity !== null;
+  }
+
+  get isEditMode(): boolean {
+    return this.editingCity !== null;
+  }
+
+  get selectedCity(): AdminCityDetail | null {
+    return this.viewingCity;
+  }
 
   // ================= FORM =================
 
@@ -151,7 +181,7 @@ export class CityManagementComponent implements OnInit {
 
         next: (response) => {
 
-          this.cities = response.content ?? [];
+          this.pageCities = response.content ?? [];
 
           this.totalElements = response.totalElements ?? 0;
           this.totalPages = response.totalPages ?? 0;
@@ -238,26 +268,31 @@ export class CityManagementComponent implements OnInit {
     const term = this.searchTerm.trim().toLowerCase();
 
     if (!term) {
-
-      this.filteredCities = [...this.cities];
-
+      this.cities = [...this.pageCities];
       return;
     }
 
-    this.filteredCities = this.cities.filter(city =>
+    this.cities = this.pageCities.filter(city =>
 
       (city.name ?? '').toLowerCase().includes(term) ||
 
-      (city.code ?? '').toLowerCase().includes(term) ||
-
       (city.tagline ?? '').toLowerCase().includes(term) ||
 
-      (city.stateName ?? '').toLowerCase().includes(term)
+      (city.stateName ?? '').toLowerCase().includes(term) ||
+
+      (city.code ?? '').toLowerCase().includes(term)
 
     );
   }
 
-  // ================= PAGINATION METHODS =================
+  onSearchChange(): void {
+
+    this.applySearch();
+
+    this.cdr.detectChanges();
+  }
+
+  // ================= PAGINATION =================
 
   goToPage(page: number): void {
 
@@ -278,18 +313,14 @@ export class CityManagementComponent implements OnInit {
   previousPage(): void {
 
     if (this.currentPage > 0) {
-
       this.goToPage(this.currentPage - 1);
-
     }
   }
 
   nextPage(): void {
 
     if (this.currentPage < this.totalPages - 1) {
-
       this.goToPage(this.currentPage + 1);
-
     }
   }
 
@@ -305,6 +336,12 @@ export class CityManagementComponent implements OnInit {
     this.currentPage = 0;
 
     this.loadCities();
+  }
+
+  // HTML-compatible pagination handler
+
+  onPageSizeChange(size: number | string): void {
+    this.changePageSize(size);
   }
 
   // ================= ADD CITY =================
@@ -355,6 +392,7 @@ export class CityManagementComponent implements OnInit {
     this.detailLoading = true;
 
     this.showForm = false;
+    this.viewingCity = null;
 
     this.editingCity = null;
 
@@ -415,6 +453,15 @@ export class CityManagementComponent implements OnInit {
 
   // ================= VIEW CITY DETAILS =================
 
+  viewCity(cityId: number): void {
+
+    const city = this.cities.find(item => item.id === cityId);
+
+    if (city) {
+      this.openViewDetails(city);
+    }
+  }
+
   openViewDetails(city: AdminCity): void {
 
     if (
@@ -460,9 +507,15 @@ export class CityManagementComponent implements OnInit {
       });
   }
 
+  closeViewModal(): void {
+    this.closeViewDetails();
+  }
+
   closeViewDetails(): void {
 
     this.viewingCity = null;
+
+    this.viewLoading = false;
 
     this.cdr.detectChanges();
   }
@@ -481,6 +534,10 @@ export class CityManagementComponent implements OnInit {
   }
 
   // ================= CLOSE FORM =================
+
+  closeFormModal(): void {
+    this.closeForm();
+  }
 
   closeForm(): void {
 
@@ -560,14 +617,11 @@ export class CityManagementComponent implements OnInit {
         this.editingCity = null;
 
         this.successMessage = isEditing
-
           ? 'City updated successfully.'
-
           : 'City added successfully.';
 
         this.cityForm.reset();
 
-        // Newly created records should appear on the first page.
         if (!isEditing) {
           this.currentPage = 0;
         }
@@ -712,8 +766,6 @@ export class CityManagementComponent implements OnInit {
           this.successMessage =
             `${city.name} deleted successfully.`;
 
-          // If the last row on this page is deleted,
-          // move to the previous page.
           if (
             this.cities.length === 1 &&
             this.currentPage > 0

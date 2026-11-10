@@ -5,6 +5,8 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environments';
 import { ApiResponse } from '../models/api-response.model';
+import { PageResponse } from '../../shared/models/page-response.model';
+
 
 import {
     AdminCategory,
@@ -52,9 +54,9 @@ export class CategoryService {
     // ================= ADMIN APIs =================
 
     // Get lightweight category list
-    getAdminCategories(): Observable<AdminCategory[]> {
+    getAdminCategories(page: number = 0, size: number = 10): Observable<PageResponse<AdminCategory>> {
         return this.http
-            .get<ApiResponse<AdminCategory[]> | AdminCategory[]>(
+            .get<ApiResponse<PageResponse<AdminCategory>> | PageResponse<AdminCategory>>(
                 this.adminCategoriesUrl
             )
             .pipe(

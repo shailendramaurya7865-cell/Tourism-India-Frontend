@@ -245,8 +245,8 @@ export class TouristPlaceManagementComponent implements OnInit {
 
   loadCategories(): void {
     this.categoryService.getAdminCategories().subscribe({
-      next: (categories) => {
-        this.categories = categories ?? [];
+      next: (response) => {
+        this.categories = response.content ?? [];
 
         this.cdr.detectChanges();
       },

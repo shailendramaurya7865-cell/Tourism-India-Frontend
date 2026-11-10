@@ -5,13 +5,13 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environments';
 import { ApiResponse } from '../models/api-response.model';
 import { TouristPlace } from '../models/tourist-place.model';
+import { PageResponse } from '../../shared/models/page-response.model';
 
 import {
   AdminTouristPlace,
   AdminTouristPlaceDetail,
   TouristPlaceStats,
-  TouristPlaceRequest,
-  PageResponse
+  TouristPlaceRequest
 } from '../../features/admin/models/admin-tourist-place.model';
 
 @Injectable({
@@ -79,7 +79,6 @@ export class TouristPlaceService {
 
   // ================= ADMIN APIs =================
 
-  // Get lightweight tourist place list
 // Get paginated admin tourist places
 getAdminTouristPlaces(
   page: number = 0,

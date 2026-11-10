@@ -18,9 +18,7 @@ import {
 import { StateService } from '../../../core/services/state.services';
 import { CityService } from '../../../core/services/city.services';
 
-import {
-  AdminState
-} from '../../../features/admin/models/admin-state.model';
+import { AdminState } from '../../../features/admin/models/admin-state.model';
 
 import {
   AdminCity,
@@ -32,7 +30,11 @@ import {
 @Component({
   selector: 'app-city-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   templateUrl: './city-management.component.html',
   styleUrl: './city-management.component.css'
 })
@@ -40,8 +42,11 @@ export class CityManagementComponent implements OnInit {
 
   private readonly cityService = inject(CityService);
   private readonly stateService = inject(StateService);
+
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  // ================= DATA =================
 
   cities: AdminCity[] = [];
   filteredCities: AdminCity[] = [];
@@ -55,22 +60,53 @@ export class CityManagementComponent implements OnInit {
     featuredCities: 0
   };
 
+  // ================= PAGINATION =================
+
+  currentPage = 0;
+  pageSize = 10;
+
+  totalPages = 0;
+  totalElements = 0;
+
+  pageSizeOptions = [5, 10, 20, 50];
+
+  readonly Math = Math;
+
+  get pageNumbers(): number[] {
+    return Array.from(
+      { length: this.totalPages },
+      (_, index) => index
+    );
+  }
+
+  // ================= LOADING STATES =================
+
   loading = false;
   saving = false;
   detailLoading = false;
+  viewLoading = false;
+
+  // ================= MESSAGES =================
 
   errorMessage = '';
   successMessage = '';
 
+  // ================= SEARCH =================
+
   searchTerm = '';
+
+  // ================= MODALS =================
 
   showForm = false;
 
   editingCity: AdminCityDetail | null = null;
 
+  viewingCity: AdminCityDetail | null = null;
+
   // ================= FORM =================
 
   cityForm = this.fb.group({
+
     name: ['', [
       Validators.required,
       Validators.maxLength(255)
@@ -91,6 +127,7 @@ export class CityManagementComponent implements OnInit {
     isFeatured: [false],
 
     isActive: [true]
+
   });
 
   // ================= INITIALIZATION =================
@@ -101,39 +138,48 @@ export class CityManagementComponent implements OnInit {
     this.loadStates();
   }
 
-  // ================= LOAD DATA =================
+  // ================= LOAD CITIES =================
 
   loadCities(): void {
 
     this.loading = true;
     this.errorMessage = '';
 
-    this.cityService.getAdminCities().subscribe({
+    this.cityService
+      .getAdminCities(this.currentPage, this.pageSize)
+      .subscribe({
 
-      next: (cities) => {
+        next: (response) => {
 
-        this.cities = cities ?? [];
-        this.applySearch();
+          this.cities = response.content ?? [];
 
-        this.loading = false;
+          this.totalElements = response.totalElements ?? 0;
+          this.totalPages = response.totalPages ?? 0;
 
-        this.cdr.detectChanges();
-      },
+          this.applySearch();
 
-      error: (error) => {
+          this.loading = false;
 
-        this.loading = false;
+          this.cdr.detectChanges();
+        },
 
-        this.errorMessage =
-          error.error?.message ||
-          'Unable to load cities. Please try again.';
+        error: (error) => {
 
-        console.error('Load admin cities failed:', error);
+          this.loading = false;
 
-        this.cdr.detectChanges();
-      }
-    });
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to load cities. Please try again.';
+
+          console.error('Load admin cities failed:', error);
+
+          this.cdr.detectChanges();
+        }
+
+      });
   }
+
+  // ================= LOAD STATISTICS =================
 
   loadCityStats(): void {
 
@@ -152,6 +198,7 @@ export class CityManagementComponent implements OnInit {
 
         this.cdr.detectChanges();
       }
+
     });
   }
 
@@ -180,6 +227,7 @@ export class CityManagementComponent implements OnInit {
 
         this.cdr.detectChanges();
       }
+
     });
   }
 
@@ -189,27 +237,88 @@ export class CityManagementComponent implements OnInit {
 
     const term = this.searchTerm.trim().toLowerCase();
 
+    if (!term) {
+
+      this.filteredCities = [...this.cities];
+
+      return;
+    }
+
     this.filteredCities = this.cities.filter(city =>
 
-      city.name.toLowerCase().includes(term) ||
+      (city.name ?? '').toLowerCase().includes(term) ||
+
+      (city.code ?? '').toLowerCase().includes(term) ||
 
       (city.tagline ?? '').toLowerCase().includes(term) ||
 
       (city.stateName ?? '').toLowerCase().includes(term)
+
     );
+  }
+
+  // ================= PAGINATION METHODS =================
+
+  goToPage(page: number): void {
+
+    if (
+      page < 0 ||
+      page >= this.totalPages ||
+      page === this.currentPage ||
+      this.loading
+    ) {
+      return;
+    }
+
+    this.currentPage = page;
+
+    this.loadCities();
+  }
+
+  previousPage(): void {
+
+    if (this.currentPage > 0) {
+
+      this.goToPage(this.currentPage - 1);
+
+    }
+  }
+
+  nextPage(): void {
+
+    if (this.currentPage < this.totalPages - 1) {
+
+      this.goToPage(this.currentPage + 1);
+
+    }
+  }
+
+  changePageSize(size: number | string): void {
+
+    const newSize = Number(size);
+
+    if (!newSize || newSize < 1 || this.loading) {
+      return;
+    }
+
+    this.pageSize = newSize;
+    this.currentPage = 0;
+
+    this.loadCities();
   }
 
   // ================= ADD CITY =================
 
   openAddForm(): void {
 
-    if (this.detailLoading || this.saving) {
+    if (this.saving || this.detailLoading) {
       return;
     }
 
     this.editingCity = null;
 
     this.cityForm.reset({
+
       name: '',
       code: '',
       stateId: null,
@@ -219,6 +328,7 @@ export class CityManagementComponent implements OnInit {
       description: '',
       isFeatured: false,
       isActive: true
+
     });
 
     this.clearMessages();
@@ -232,64 +342,142 @@ export class CityManagementComponent implements OnInit {
 
   openEditForm(city: AdminCity): void {
 
-    if (this.detailLoading || this.saving) {
+    if (
+      this.detailLoading ||
+      this.saving ||
+      this.viewLoading
+    ) {
       return;
     }
 
     this.clearMessages();
 
     this.detailLoading = true;
+
     this.showForm = false;
+
     this.editingCity = null;
 
     this.cityForm.reset();
 
-    this.cityService.getAdminCityById(city.id).subscribe({
+    this.cityService
+      .getAdminCityById(city.id)
+      .subscribe({
 
-      next: (details) => {
+        next: (details) => {
 
-        this.editingCity = details;
+          this.editingCity = details;
 
-        this.cityForm.patchValue({
+          this.cityForm.patchValue({
 
-          name: details.name,
+            name: details.name,
 
-          code: details.code ?? '',
+            code: details.code ?? '',
 
-          stateId: details.stateId,
+            stateId: details.stateId,
 
-          slug: details.slug ?? '',
+            slug: details.slug ?? '',
 
-          tagline: details.tagline ?? '',
+            tagline: details.tagline ?? '',
 
-          imageUrl: details.imageUrl ?? '',
+            imageUrl: details.imageUrl ?? '',
 
-          description: details.description ?? '',
+            description: details.description ?? '',
 
-          isFeatured: details.isFeatured,
+            isFeatured: details.isFeatured,
 
-          isActive: details.isActive
-        });
+            isActive: details.isActive
 
-        this.detailLoading = false;
-        this.showForm = true;
+          });
 
-        this.cdr.detectChanges();
-      },
+          this.detailLoading = false;
 
-      error: (error) => {
+          this.showForm = true;
 
-        this.detailLoading = false;
+          this.cdr.detectChanges();
+        },
 
-        this.errorMessage =
-          error.error?.message ||
-          'Unable to load city details. Please try again.';
+        error: (error) => {
 
-        console.error('Load city details failed:', error);
+          this.detailLoading = false;
 
-        this.cdr.detectChanges();
-      }
-    });
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to load city details. Please try again.';
+
+          console.error('Load city details failed:', error);
+
+          this.cdr.detectChanges();
+        }
+
+      });
+  }
+
+  // ================= VIEW CITY DETAILS =================
+
+  openViewDetails(city: AdminCity): void {
+
+    if (
+      this.viewLoading ||
+      this.detailLoading ||
+      this.saving
+    ) {
+      return;
+    }
+
+    this.clearMessages();
+
+    this.viewingCity = null;
+
+    this.viewLoading = true;
+
+    this.cityService
+      .getAdminCityById(city.id)
+      .subscribe({
+
+        next: (details) => {
+
+          this.viewingCity = details;
+
+          this.viewLoading = false;
+
+          this.cdr.detectChanges();
+        },
+
+        error: (error) => {
+
+          this.viewLoading = false;
+
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to load city details. Please try again.';
+
+          console.error('View city details failed:', error);
+
+          this.cdr.detectChanges();
+        }
+
+      });
+  }
+
+  closeViewDetails(): void {
+
+    this.viewingCity = null;
+
+    this.cdr.detectChanges();
+  }
+
+  editFromView(): void {
+
+    if (!this.viewingCity) {
+      return;
+    }
+
+    const city = this.viewingCity;
+
+    this.viewingCity = null;
+
+    this.openEditForm(city);
   }
 
   // ================= CLOSE FORM =================
@@ -301,6 +489,7 @@ export class CityManagementComponent implements OnInit {
     }
 
     this.showForm = false;
+
     this.editingCity = null;
 
     this.cityForm.reset();
@@ -327,7 +516,7 @@ export class CityManagementComponent implements OnInit {
 
       code: formValue.code?.trim().toUpperCase() || null,
 
-      stateId: formValue.stateId!,
+      stateId: Number(formValue.stateId),
 
       slug: formValue.slug?.trim() || null,
 
@@ -342,6 +531,7 @@ export class CityManagementComponent implements OnInit {
       isActive: formValue.isActive ?? true,
 
       config: this.editingCity?.config ?? {}
+
     };
 
     this.saving = true;
@@ -377,6 +567,11 @@ export class CityManagementComponent implements OnInit {
 
         this.cityForm.reset();
 
+        // Newly created records should appear on the first page.
+        if (!isEditing) {
+          this.currentPage = 0;
+        }
+
         this.refreshData();
 
         this.cdr.detectChanges();
@@ -394,6 +589,7 @@ export class CityManagementComponent implements OnInit {
 
         this.cdr.detectChanges();
       }
+
     });
   }
 
@@ -401,7 +597,11 @@ export class CityManagementComponent implements OnInit {
 
   toggleActive(city: AdminCity): void {
 
-    if (this.saving || this.detailLoading) {
+    if (
+      this.saving ||
+      this.detailLoading ||
+      this.viewLoading
+    ) {
       return;
     }
 
@@ -409,75 +609,84 @@ export class CityManagementComponent implements OnInit {
 
     this.detailLoading = true;
 
-    this.cityService.getAdminCityById(city.id).subscribe({
+    this.cityService
+      .getAdminCityById(city.id)
+      .subscribe({
 
-      next: (details) => {
+        next: (details) => {
 
-        const payload: CityRequest = {
+          const payload: CityRequest = {
 
-          name: details.name,
+            name: details.name,
 
-          code: details.code,
+            code: details.code,
 
-          stateId: details.stateId,
+            stateId: details.stateId,
 
-          slug: details.slug,
+            slug: details.slug,
 
-          tagline: details.tagline,
+            tagline: details.tagline,
 
-          description: details.description,
+            description: details.description,
 
-          imageUrl: details.imageUrl,
+            imageUrl: details.imageUrl,
 
-          isFeatured: details.isFeatured,
+            isFeatured: details.isFeatured,
 
-          isActive: !details.isActive,
+            isActive: !details.isActive,
 
-          config: details.config ?? {}
-        };
+            config: details.config ?? {}
 
-        this.cityService.updateCity(city.id, payload).subscribe({
+          };
 
-          next: () => {
+          this.cityService
+            .updateCity(city.id, payload)
+            .subscribe({
 
-            this.detailLoading = false;
+              next: () => {
 
-            this.successMessage =
-              `${city.name} ${payload.isActive ? 'activated' : 'deactivated'} successfully.`;
+                this.detailLoading = false;
 
-            this.refreshData();
+                this.successMessage =
+                  `${city.name} ${
+                    payload.isActive ? 'activated' : 'deactivated'
+                  } successfully.`;
 
-            this.cdr.detectChanges();
-          },
+                this.refreshData();
 
-          error: (error) => {
+                this.cdr.detectChanges();
+              },
 
-            this.detailLoading = false;
+              error: (error) => {
 
-            this.errorMessage =
-              error.error?.message ||
-              'Unable to update city status.';
+                this.detailLoading = false;
 
-            console.error('Update city status failed:', error);
+                this.errorMessage =
+                  error.error?.message ||
+                  'Unable to update city status.';
 
-            this.cdr.detectChanges();
-          }
-        });
-      },
+                console.error('Update city status failed:', error);
 
-      error: (error) => {
+                this.cdr.detectChanges();
+              }
 
-        this.detailLoading = false;
+            });
+        },
 
-        this.errorMessage =
-          error.error?.message ||
-          'Unable to load city details.';
+        error: (error) => {
 
-        console.error('Load city for status update failed:', error);
+          this.detailLoading = false;
 
-        this.cdr.detectChanges();
-      }
-    });
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to load city details.';
+
+          console.error('Load city for status update failed:', error);
+
+          this.cdr.detectChanges();
+        }
+
+      });
   }
 
   // ================= DELETE CITY =================
@@ -492,34 +701,48 @@ export class CityManagementComponent implements OnInit {
       return;
     }
 
-    this.cityService.deleteCity(city.id).subscribe({
+    this.clearMessages();
 
-      next: () => {
+    this.cityService
+      .deleteCity(city.id)
+      .subscribe({
 
-        this.successMessage =
-          `${city.name} deleted successfully.`;
+        next: () => {
 
-        this.refreshData();
+          this.successMessage =
+            `${city.name} deleted successfully.`;
 
-        this.cdr.detectChanges();
-      },
+          // If the last row on this page is deleted,
+          // move to the previous page.
+          if (
+            this.cities.length === 1 &&
+            this.currentPage > 0
+          ) {
+            this.currentPage--;
+          }
 
-      error: (error) => {
+          this.refreshData();
 
-        this.errorMessage =
-          error.error?.message ||
-          'Unable to delete city.';
+          this.cdr.detectChanges();
+        },
 
-        console.error('Delete city failed:', error);
+        error: (error) => {
 
-        this.cdr.detectChanges();
-      }
-    });
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to delete city.';
+
+          console.error('Delete city failed:', error);
+
+          this.cdr.detectChanges();
+        }
+
+      });
   }
 
   // ================= REFRESH =================
 
-  private refreshData(): void {
+  refreshData(): void {
 
     this.loadCities();
 
@@ -566,4 +789,5 @@ export class CityManagementComponent implements OnInit {
   get stateIdControl() {
     return this.cityForm.controls.stateId;
   }
+
 }

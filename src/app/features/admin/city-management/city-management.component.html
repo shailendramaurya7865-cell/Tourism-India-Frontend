@@ -77,9 +77,10 @@
 
       <div class="search-box">
         <span>⌕</span>
+
         <input
           type="text"
-          placeholder="Search by city name, tagline or state..."
+          placeholder="Search by city name, code, tagline or state..."
           [(ngModel)]="searchTerm"
           (ngModelChange)="applySearch()"
         />
@@ -202,29 +203,42 @@
             <td>
               <div class="action-buttons">
 
+                <!-- View -->
+                <button
+                  type="button"
+                  class="action-btn view-btn"
+                  title="View city details"
+                  [disabled]="detailLoading || saving || viewLoading"
+                  (click)="openViewDetails(city)">
+                  👁
+                </button>
+
+                <!-- Edit -->
                 <button
                   type="button"
                   class="action-btn edit-btn"
                   title="Edit city"
-                  [disabled]="detailLoading || saving"
+                  [disabled]="detailLoading || saving || viewLoading"
                   (click)="openEditForm(city)">
                   ✎
                 </button>
 
+                <!-- Toggle Status -->
                 <button
                   type="button"
                   class="action-btn toggle-btn"
                   [title]="city.isActive ? 'Deactivate city' : 'Activate city'"
-                  [disabled]="detailLoading || saving"
+                  [disabled]="detailLoading || saving || viewLoading"
                   (click)="toggleActive(city)">
                   {{ city.isActive ? '◉' : '○' }}
                 </button>
 
+                <!-- Delete -->
                 <button
                   type="button"
                   class="action-btn delete-btn"
                   title="Delete city"
-                  [disabled]="detailLoading || saving"
+                  [disabled]="detailLoading || saving || viewLoading"
                   (click)="deleteCity(city)">
                   🗑
                 </button>
@@ -240,12 +254,100 @@
 
     </div>
 
-    <!-- Table Footer -->
+    <!-- Pagination Footer -->
     <div
-      class="table-footer"
-      *ngIf="!loading && filteredCities.length > 0">
+      class="table-footer pagination-footer"
+      *ngIf="!loading && totalElements > 0">
 
-      Showing {{ filteredCities.length }} of {{ cities.length }} cities
+      <div class="pagination-info">
+
+        Showing
+
+        <strong>
+          {{ currentPage * pageSize + 1 }}
+          -
+          {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
+        </strong>
+
+        of
+
+        <strong>{{ totalElements }}</strong>
+
+        cities
+
+      </div>
+
+      <!-- Page Size -->
+      <div class="page-size-selector">
+
+        <label for="pageSize">Rows per page:</label>
+
+        <select
+          id="pageSize"
+          [value]="pageSize"
+          (change)="changePageSize($any($event.target).value)"
+          [disabled]="loading">
+
+          <option
+            *ngFor="let size of pageSizeOptions"
+            [value]="size">
+            {{ size }}
+          </option>
+
+        </select>
+
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-controls">
+
+        <button
+          type="button"
+          class="pagination-btn"
+          title="First page"
+          [disabled]="currentPage === 0 || loading"
+          (click)="goToPage(0)">
+          «
+        </button>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          title="Previous page"
+          [disabled]="currentPage === 0 || loading"
+          (click)="previousPage()">
+          ‹
+        </button>
+
+        <button
+          type="button"
+          class="pagination-btn page-number"
+          *ngFor="let page of pageNumbers"
+          [class.active-page]="currentPage === page"
+          [disabled]="loading"
+          (click)="goToPage(page)">
+          {{ page + 1 }}
+        </button>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          title="Next page"
+          [disabled]="currentPage >= totalPages - 1 || loading"
+          (click)="nextPage()">
+          ›
+        </button>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          title="Last page"
+          [disabled]="currentPage >= totalPages - 1 || loading"
+          (click)="goToPage(totalPages - 1)">
+          »
+        </button>
+
+      </div>
 
     </div>
 
@@ -257,7 +359,7 @@
 <!-- ADD / EDIT CITY MODAL -->
 <div
   class="modal-backdrop"
-  *ngIf="showForm || detailLoading"
+  *ngIf="showForm || (detailLoading && !viewingCity)"
   (click)="closeForm()">
 
   <div
@@ -356,11 +458,13 @@
 
               <select formControlName="stateId">
 
-                <option value="" disabled>Select a state</option>
+                <option [ngValue]="null" disabled>
+                  Select a state
+                </option>
 
                 <option
                   *ngFor="let state of states"
-                  [value]="state.id">
+                  [ngValue]="state.id">
 
                   {{ state.name }}
 
@@ -492,7 +596,7 @@
           <button
             type="submit"
             class="btn-primary"
-            [disabled]="saving">
+            [disabled]="saving || detailLoading">
 
             {{ saving
               ? 'Saving...'
@@ -503,6 +607,190 @@
         </div>
 
       </form>
+
+    </ng-container>
+
+  </div>
+
+</div>
+
+
+<!-- VIEW CITY DETAILS MODAL -->
+<div
+  class="modal-backdrop"
+  *ngIf="viewingCity || viewLoading"
+  (click)="closeViewDetails()">
+
+  <div
+    class="state-modal view-modal"
+    (click)="$event.stopPropagation()">
+
+    <!-- Loading -->
+    <div
+      class="loading-state"
+      *ngIf="viewLoading">
+
+      Loading city details...
+
+    </div>
+
+    <!-- Details -->
+    <ng-container *ngIf="viewingCity && !viewLoading">
+
+      <div class="modal-header">
+
+        <div>
+          <h2>City Details</h2>
+          <p>Complete information about this city.</p>
+        </div>
+
+        <button
+          type="button"
+          class="close-btn"
+          (click)="closeViewDetails()">
+          ×
+        </button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <!-- City Image -->
+        <div class="city-detail-image">
+
+          <img
+            *ngIf="viewingCity.imageUrl"
+            [src]="viewingCity.imageUrl"
+            [alt]="viewingCity.name"
+          />
+
+          <div
+            *ngIf="!viewingCity.imageUrl"
+            class="state-placeholder">
+            {{ viewingCity.name.charAt(0) }}
+          </div>
+
+        </div>
+
+        <!-- Basic Information -->
+        <div class="detail-section">
+
+          <h3>Basic Information</h3>
+
+          <div class="detail-grid">
+
+            <div class="detail-item">
+              <span>City Name</span>
+              <strong>{{ viewingCity.name }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <span>City Code</span>
+              <strong>{{ viewingCity.code || 'Not provided' }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Slug</span>
+              <strong>{{ viewingCity.slug || 'Not provided' }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Tagline</span>
+              <strong>{{ viewingCity.tagline || 'Not provided' }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <span>State</span>
+              <strong>{{ viewingCity.stateName }}</strong>
+            </div>
+
+            <div class="detail-item">
+              <span>State Code</span>
+              <strong>{{ viewingCity.stateCode || 'Not provided' }}</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Description -->
+        <div class="detail-section">
+
+          <h3>Description</h3>
+
+          <p class="detail-description">
+            {{ viewingCity.description || 'No description added.' }}
+          </p>
+
+        </div>
+
+        <!-- Publishing Information -->
+        <div class="detail-section">
+
+          <h3>Publishing Information</h3>
+
+          <div class="detail-grid">
+
+            <div class="detail-item">
+              <span>Status</span>
+
+              <span
+                class="status-badge"
+                [class.active]="viewingCity.isActive"
+                [class.inactive]="!viewingCity.isActive">
+
+                <span class="status-dot"></span>
+
+                {{ viewingCity.isActive ? 'Active' : 'Inactive' }}
+
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <span>Featured</span>
+              <strong>
+                {{ viewingCity.isFeatured ? 'Yes' : 'No' }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Created On</span>
+              <strong>
+                {{ viewingCity.createdAt | date:'dd MMM yyyy, hh:mm a' }}
+              </strong>
+            </div>
+
+            <div class="detail-item">
+              <span>Last Updated</span>
+              <strong>
+                {{ viewingCity.updatedAt | date:'dd MMM yyyy, hh:mm a' }}
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="closeViewDetails()">
+          Close
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="editFromView()">
+          ✎ Edit City
+        </button>
+
+      </div>
 
     </ng-container>
 

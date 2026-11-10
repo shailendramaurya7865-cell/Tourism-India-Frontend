@@ -9,6 +9,7 @@ export interface AdminCity {
   isFeatured: boolean;
   isActive: boolean;
   createdAt: string;
+  updatedAt:string
 
   stateId: number;
   stateName: string;

@@ -2,6 +2,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ChangeDetectorRef,
   inject
 } from '@angular/core';
@@ -14,8 +15,11 @@ import {
   FormBuilder,
   Validators
 } from '@angular/forms';
+import { Observable, finalize, map, of, switchMap } from 'rxjs';
 
 import { StateService } from '../../../core/services/state.services';
+import { MediaService } from '../../../core/services/media.service';
+import { MediaFolder } from '../../../shared/models/media-folder.model';
 
 import {
   AdminState,
@@ -35,11 +39,19 @@ import {
   templateUrl: './state-management.component.html',
   styleUrl: './state-management.component.css'
 })
-export class StateManagementComponent implements OnInit {
+export class StateManagementComponent implements OnInit, OnDestroy {
 
   private readonly stateService = inject(StateService);
+  private readonly mediaService = inject(MediaService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly mediaFolder: MediaFolder = 'STATES';
+
+  readonly maxImageSize = 5 * 1024 * 1024;
+  readonly allowedImageTypes = ['image/png', 'image/jpeg', 'image/webp'];
+  selectedImageFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  private previewObjectUrl: string | null = null;
 
   // ================= DATA =================
 
@@ -159,6 +171,81 @@ export class StateManagementComponent implements OnInit {
   ngOnInit(): void {
     this.loadStates();
     this.loadStateStats();
+  }
+
+  ngOnDestroy(): void {
+    this.clearImagePreview();
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.clearMessages();
+
+    if (!this.allowedImageTypes.includes(file.type)) {
+      this.errorMessage = 'Please select a PNG, JPG or WebP image.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (file.size > this.maxImageSize) {
+      this.errorMessage = 'Image size must not exceed 5 MB.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.clearImagePreview();
+    this.selectedImageFile = file;
+    this.previewObjectUrl = URL.createObjectURL(file);
+    this.imagePreviewUrl = this.previewObjectUrl;
+    this.cdr.detectChanges();
+  }
+
+  removeSelectedImage(): void {
+    this.selectedImageFile = null;
+    this.clearImagePreview();
+    this.stateForm.patchValue({ imageUrl: '' });
+    this.resetFileInput();
+    this.cdr.detectChanges();
+  }
+
+  private clearImagePreview(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+    }
+    this.previewObjectUrl = null;
+    this.imagePreviewUrl = null;
+  }
+
+  private resetImageSelection(): void {
+    this.selectedImageFile = null;
+    this.clearImagePreview();
+    this.resetFileInput();
+  }
+
+  private resetFileInput(): void {
+    const input = document.getElementById('stateImage') as HTMLInputElement | null;
+    if (input) input.value = '';
+  }
+
+  private uploadImageIfSelected(): Observable<string | null> {
+    if (!this.selectedImageFile) {
+      return of(this.stateForm.get('imageUrl')?.value?.trim() || null);
+    }
+
+    return this.mediaService.uploadImage(this.selectedImageFile, this.mediaFolder)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data?.url) {
+            throw new Error(response.message || 'Image upload failed.');
+          }
+          return response.data.url;
+        })
+      );
   }
 
   // ================= LOAD STATES =================
@@ -336,6 +423,7 @@ export class StateManagementComponent implements OnInit {
     }
 
     this.editingState = null;
+    this.resetImageSelection();
 
     this.stateForm.reset({
 
@@ -376,6 +464,7 @@ export class StateManagementComponent implements OnInit {
     this.showForm = false;
     this.viewingState = null;
     this.editingState = null;
+    this.resetImageSelection();
 
     this.stateForm.reset();
 
@@ -386,6 +475,7 @@ export class StateManagementComponent implements OnInit {
         next: (details) => {
 
           this.editingState = details;
+          this.imagePreviewUrl = details.imageUrl ?? null;
 
           this.stateForm.patchValue({
 
@@ -529,6 +619,7 @@ export class StateManagementComponent implements OnInit {
     this.showForm = false;
 
     this.editingState = null;
+    this.resetImageSelection();
 
     this.stateForm.reset();
 
@@ -546,54 +637,45 @@ export class StateManagementComponent implements OnInit {
       return;
     }
 
-    const formValue = this.stateForm.getRawValue();
-
-    const payload: StateRequest = {
-
-      name: formValue.name?.trim() ?? '',
-
-      code: formValue.code?.trim().toUpperCase() ?? '',
-
-      slug: formValue.slug?.trim() || null,
-
-      tagline: formValue.tagline?.trim() || null,
-
-      description: formValue.description?.trim() || null,
-
-      imageUrl: formValue.imageUrl?.trim() || null,
-
-      isFeatured: formValue.isFeatured ?? false,
-
-      isActive: formValue.isActive ?? true,
-
-      config: this.editingState?.config ?? {}
-
-    };
-
     this.saving = true;
 
     this.clearMessages();
 
     const isEditing = !!this.editingState;
 
-    const request = isEditing
+    this.uploadImageIfSelected()
+      .pipe(
+        switchMap(imageUrl => {
+          const formValue = this.stateForm.getRawValue();
+          const payload: StateRequest = {
+            name: formValue.name?.trim() ?? '',
+            code: formValue.code?.trim().toUpperCase() ?? '',
+            slug: formValue.slug?.trim() || null,
+            tagline: formValue.tagline?.trim() || null,
+            description: formValue.description?.trim() || null,
+            imageUrl,
+            isFeatured: formValue.isFeatured ?? false,
+            isActive: formValue.isActive ?? true,
+            config: this.editingState?.config ?? {}
+          };
 
-      ? this.stateService.updateState(
-          this.editingState!.id,
-          payload
-        )
-
-      : this.stateService.createState(payload);
-
-    request.subscribe({
+          return isEditing
+            ? this.stateService.updateState(this.editingState!.id, payload)
+            : this.stateService.createState(payload);
+        }),
+        finalize(() => {
+          this.saving = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
 
       next: () => {
-
-        this.saving = false;
 
         this.showForm = false;
 
         this.editingState = null;
+        this.resetImageSelection();
 
         this.successMessage = isEditing
           ? 'State updated successfully.'
@@ -612,10 +694,9 @@ export class StateManagementComponent implements OnInit {
 
       error: (error) => {
 
-        this.saving = false;
-
         this.errorMessage =
           error.error?.message ||
+          error.message ||
           'Unable to save state. Please try again.';
 
         console.error('Save state failed:', error);

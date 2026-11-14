@@ -1342,3 +1342,130 @@ tbody tr:hover {
     font-size: 16px;
   }
 }
+
+.image-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 17px;
+  background: #f8faf8;
+  border: 1px dashed #cbd9ce;
+  border-radius: 9px;
+}
+
+.image-preview-container {
+  width: 115px;
+  height: 115px;
+  flex-shrink: 0;
+  border: 1px solid #e4ebe5;
+  border-radius: 9px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.upload-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+}
+
+.image-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #9aa79e;
+  font-size: 10px;
+  text-align: center;
+  padding: 8px;
+}
+
+.upload-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8f0eb;
+  color: #315e46;
+  font-size: 20px;
+}
+
+.image-upload-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.image-upload-content > strong {
+  display: block;
+  color: #315e46;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.image-upload-content p {
+  color: #829188;
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.image-upload-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid #d5e1d7;
+  background: #fff;
+  color: #315e46;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-label:hover {
+  background: #e8f0eb;
+  border-color: #315e46;
+}
+
+.btn-remove-image {
+  border: none;
+  background: transparent;
+  color: #b45d5d;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.btn-remove-image:hover {
+  text-decoration: underline;
+}
+
+.selected-file-name {
+  display: block;
+  color: #315e46;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .image-upload-section {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

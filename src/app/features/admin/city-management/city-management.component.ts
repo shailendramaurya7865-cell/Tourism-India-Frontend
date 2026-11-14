@@ -2,6 +2,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ChangeDetectorRef,
   inject
 } from '@angular/core';
@@ -14,9 +15,12 @@ import {
   FormBuilder,
   Validators
 } from '@angular/forms';
+import { Observable, finalize, map, of, switchMap } from 'rxjs';
 
 import { StateService } from '../../../core/services/state.services';
 import { CityService } from '../../../core/services/city.services';
+import { MediaService } from '../../../core/services/media.service';
+import { MediaFolder } from '../../../shared/models/media-folder.model';
 
 import { AdminState } from '../../../features/admin/models/admin-state.model';
 
@@ -38,12 +42,20 @@ import {
   templateUrl: './city-management.component.html',
   styleUrl: './city-management.component.css'
 })
-export class CityManagementComponent implements OnInit {
+export class CityManagementComponent implements OnInit, OnDestroy {
 
   private readonly cityService = inject(CityService);
   private readonly stateService = inject(StateService);
+  private readonly mediaService = inject(MediaService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly mediaFolder: MediaFolder = 'CITIES';
+
+  readonly maxImageSize = 5 * 1024 * 1024;
+  readonly allowedImageTypes = ['image/png', 'image/jpeg', 'image/webp'];
+  selectedImageFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  private previewObjectUrl: string | null = null;
 
   // ================= DATA =================
 
@@ -166,6 +178,81 @@ export class CityManagementComponent implements OnInit {
     this.loadCities();
     this.loadCityStats();
     this.loadStates();
+  }
+
+  ngOnDestroy(): void {
+    this.clearImagePreview();
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.clearMessages();
+
+    if (!this.allowedImageTypes.includes(file.type)) {
+      this.errorMessage = 'Please select a PNG, JPG or WebP image.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (file.size > this.maxImageSize) {
+      this.errorMessage = 'Image size must not exceed 5 MB.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.clearImagePreview();
+    this.selectedImageFile = file;
+    this.previewObjectUrl = URL.createObjectURL(file);
+    this.imagePreviewUrl = this.previewObjectUrl;
+    this.cdr.detectChanges();
+  }
+
+  removeSelectedImage(): void {
+    this.selectedImageFile = null;
+    this.clearImagePreview();
+    this.cityForm.patchValue({ imageUrl: '' });
+    this.resetFileInput();
+    this.cdr.detectChanges();
+  }
+
+  private clearImagePreview(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+    }
+    this.previewObjectUrl = null;
+    this.imagePreviewUrl = null;
+  }
+
+  private resetImageSelection(): void {
+    this.selectedImageFile = null;
+    this.clearImagePreview();
+    this.resetFileInput();
+  }
+
+  private resetFileInput(): void {
+    const input = document.getElementById('cityImage') as HTMLInputElement | null;
+    if (input) input.value = '';
+  }
+
+  private uploadImageIfSelected(): Observable<string | null> {
+    if (!this.selectedImageFile) {
+      return of(this.cityForm.get('imageUrl')?.value?.trim() || null);
+    }
+
+    return this.mediaService.uploadImage(this.selectedImageFile, this.mediaFolder)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data?.url) {
+            throw new Error(response.message || 'Image upload failed.');
+          }
+          return response.data.url;
+        })
+      );
   }
 
   // ================= LOAD CITIES =================
@@ -352,6 +439,7 @@ export class CityManagementComponent implements OnInit {
     }
 
     this.editingCity = null;
+    this.resetImageSelection();
 
     this.cityForm.reset({
 
@@ -394,6 +482,7 @@ export class CityManagementComponent implements OnInit {
     this.viewingCity = null;
 
     this.editingCity = null;
+    this.resetImageSelection();
 
     this.cityForm.reset();
 
@@ -404,6 +493,7 @@ export class CityManagementComponent implements OnInit {
         next: (details) => {
 
           this.editingCity = details;
+          this.imagePreviewUrl = details.imageUrl ?? null;
 
           this.cityForm.patchValue({
 
@@ -547,6 +637,7 @@ export class CityManagementComponent implements OnInit {
     this.showForm = false;
 
     this.editingCity = null;
+    this.resetImageSelection();
 
     this.cityForm.reset();
 
@@ -564,56 +655,46 @@ export class CityManagementComponent implements OnInit {
       return;
     }
 
-    const formValue = this.cityForm.getRawValue();
-
-    const payload: CityRequest = {
-
-      name: formValue.name?.trim() ?? '',
-
-      code: formValue.code?.trim().toUpperCase() || null,
-
-      stateId: Number(formValue.stateId),
-
-      slug: formValue.slug?.trim() || null,
-
-      tagline: formValue.tagline?.trim() || null,
-
-      description: formValue.description?.trim() || null,
-
-      imageUrl: formValue.imageUrl?.trim() || null,
-
-      isFeatured: formValue.isFeatured ?? false,
-
-      isActive: formValue.isActive ?? true,
-
-      config: this.editingCity?.config ?? {}
-
-    };
-
     this.saving = true;
 
     this.clearMessages();
 
     const isEditing = !!this.editingCity;
 
-    const request = isEditing
+    this.uploadImageIfSelected()
+      .pipe(
+        switchMap(imageUrl => {
+          const formValue = this.cityForm.getRawValue();
+          const payload: CityRequest = {
+            name: formValue.name?.trim() ?? '',
+            code: formValue.code?.trim().toUpperCase() || null,
+            stateId: Number(formValue.stateId),
+            slug: formValue.slug?.trim() || null,
+            tagline: formValue.tagline?.trim() || null,
+            description: formValue.description?.trim() || null,
+            imageUrl,
+            isFeatured: formValue.isFeatured ?? false,
+            isActive: formValue.isActive ?? true,
+            config: this.editingCity?.config ?? {}
+          };
 
-      ? this.cityService.updateCity(
-          this.editingCity!.id,
-          payload
-        )
-
-      : this.cityService.createCity(payload);
-
-    request.subscribe({
+          return isEditing
+            ? this.cityService.updateCity(this.editingCity!.id, payload)
+            : this.cityService.createCity(payload);
+        }),
+        finalize(() => {
+          this.saving = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
 
       next: () => {
-
-        this.saving = false;
 
         this.showForm = false;
 
         this.editingCity = null;
+        this.resetImageSelection();
 
         this.successMessage = isEditing
           ? 'City updated successfully.'
@@ -632,10 +713,9 @@ export class CityManagementComponent implements OnInit {
 
       error: (error) => {
 
-        this.saving = false;
-
         this.errorMessage =
           error.error?.message ||
+          error.message ||
           'Unable to save city. Please try again.';
 
         console.error('Save city failed:', error);

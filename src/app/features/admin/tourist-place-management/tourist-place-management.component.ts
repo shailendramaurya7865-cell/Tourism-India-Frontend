@@ -2,6 +2,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ChangeDetectorRef,
   inject
 } from '@angular/core';
@@ -14,11 +15,14 @@ import {
   FormBuilder,
   Validators
 } from '@angular/forms';
+import { Observable, finalize, map, of, switchMap } from 'rxjs';
 
 import { TouristPlaceService } from '../../../core/services/tourist-place.service';
 import { StateService } from '../../../core/services/state.services';
 import { CityService } from '../../../core/services/city.services';
 import { CategoryService } from '../../../core/services/category.service';
+import { MediaService } from '../../../core/services/media.service';
+import { MediaFolder } from '../../../shared/models/media-folder.model';
 
 import { AdminState } from '../../../features/admin/models/admin-state.model';
 import { AdminCity } from '../../../features/admin/models/admin-city.model';
@@ -42,15 +46,23 @@ import {
   templateUrl: './tourist-place-management.component.html',
   styleUrl: './tourist-place-management.component.css'
 })
-export class TouristPlaceManagementComponent implements OnInit {
+export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
 
   private readonly touristPlaceService = inject(TouristPlaceService);
   private readonly stateService = inject(StateService);
   private readonly cityService = inject(CityService);
   private readonly categoryService = inject(CategoryService);
+  private readonly mediaService = inject(MediaService);
 
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly mediaFolder: MediaFolder = 'TOURIST_PLACES';
+
+  readonly maxImageSize = 5 * 1024 * 1024;
+  readonly allowedImageTypes = ['image/png', 'image/jpeg', 'image/webp'];
+  selectedImageFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  private previewObjectUrl: string | null = null;
 
   // ================= DATA =================
 
@@ -167,6 +179,81 @@ export class TouristPlaceManagementComponent implements OnInit {
     this.loadTouristPlaceStats();
     this.loadStates();
     this.loadCategories();
+  }
+
+  ngOnDestroy(): void {
+    this.clearImagePreview();
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.clearMessages();
+
+    if (!this.allowedImageTypes.includes(file.type)) {
+      this.errorMessage = 'Please select a PNG, JPG or WebP image.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (file.size > this.maxImageSize) {
+      this.errorMessage = 'Image size must not exceed 5 MB.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.clearImagePreview();
+    this.selectedImageFile = file;
+    this.previewObjectUrl = URL.createObjectURL(file);
+    this.imagePreviewUrl = this.previewObjectUrl;
+    this.cdr.detectChanges();
+  }
+
+  removeSelectedImage(): void {
+    this.selectedImageFile = null;
+    this.clearImagePreview();
+    this.touristPlaceForm.patchValue({ imageUrl: '' });
+    this.resetFileInput();
+    this.cdr.detectChanges();
+  }
+
+  private clearImagePreview(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+    }
+    this.previewObjectUrl = null;
+    this.imagePreviewUrl = null;
+  }
+
+  private resetImageSelection(): void {
+    this.selectedImageFile = null;
+    this.clearImagePreview();
+    this.resetFileInput();
+  }
+
+  private resetFileInput(): void {
+    const input = document.getElementById('touristPlaceImage') as HTMLInputElement | null;
+    if (input) input.value = '';
+  }
+
+  private uploadImageIfSelected(): Observable<string | null> {
+    if (!this.selectedImageFile) {
+      return of(this.touristPlaceForm.get('imageUrl')?.value?.trim() || null);
+    }
+
+    return this.mediaService.uploadImage(this.selectedImageFile, this.mediaFolder)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data?.url) {
+            throw new Error(response.message || 'Image upload failed.');
+          }
+          return response.data.url;
+        })
+      );
   }
 
   // ================= LOAD TOURIST PLACES =================
@@ -325,6 +412,7 @@ export class TouristPlaceManagementComponent implements OnInit {
     this.editingTouristPlace = null;
     this.selectedCategoryIds = [];
     this.cities = [];
+    this.resetImageSelection();
 
     this.touristPlaceForm.reset({
       name: '',
@@ -436,6 +524,7 @@ export class TouristPlaceManagementComponent implements OnInit {
     this.detailLoading = true;
     this.showForm = false;
     this.editingTouristPlace = null;
+    this.resetImageSelection();
 
     this.touristPlaceForm.reset();
     this.selectedCategoryIds = [];
@@ -446,6 +535,7 @@ export class TouristPlaceManagementComponent implements OnInit {
       .subscribe({
         next: (details) => {
           this.editingTouristPlace = details;
+          this.imagePreviewUrl = details.imageUrl ?? null;
 
           const state = this.states.find(
             item => item.name === details.stateName
@@ -617,6 +707,7 @@ export class TouristPlaceManagementComponent implements OnInit {
     this.editingTouristPlace = null;
     this.selectedCategoryIds = [];
     this.cities = [];
+    this.resetImageSelection();
 
     this.touristPlaceForm.reset();
 
@@ -636,65 +727,53 @@ export class TouristPlaceManagementComponent implements OnInit {
       return;
     }
 
-    const formValue = this.touristPlaceForm.getRawValue();
-
-    const payload: TouristPlaceRequest = {
-      name: formValue.name?.trim() ?? '',
-      slug: formValue.slug?.trim() ?? '',
-
-      tagline: formValue.tagline?.trim() || null,
-      shortDescription: formValue.shortDescription?.trim() || null,
-      description: formValue.description?.trim() || null,
-
-      cityId: Number(formValue.cityId),
-      categoryIds: [...this.selectedCategoryIds],
-
-      address: formValue.address?.trim() || null,
-
-      latitude: formValue.latitude !== null
-        ? Number(formValue.latitude)
-        : null,
-
-      longitude: formValue.longitude !== null
-        ? Number(formValue.longitude)
-        : null,
-
-      entryFee: formValue.entryFee !== null
-        ? Number(formValue.entryFee)
-        : null,
-
-      openingTime: formValue.openingTime || null,
-      closingTime: formValue.closingTime || null,
-
-      bestTimeToVisit: formValue.bestTimeToVisit?.trim() || null,
-      timeRequired: formValue.timeRequired?.trim() || null,
-      weeklyOf: formValue.weeklyOf?.trim() || null,
-      howToReach: formValue.howToReach?.trim() || null,
-
-      imageUrl: formValue.imageUrl?.trim() || null,
-
-      isFeatured: formValue.isFeatured ?? false,
-      isActive: formValue.isActive ?? true
-    };
-
     this.saving = true;
     this.clearMessages();
 
     const isEditing = !!this.editingTouristPlace;
 
-    const request = isEditing
-      ? this.touristPlaceService.updateTouristPlace(
-          this.editingTouristPlace!.id,
-          payload
-        )
-      : this.touristPlaceService.createTouristPlace(payload);
+    this.uploadImageIfSelected()
+      .pipe(
+        switchMap(imageUrl => {
+          const formValue = this.touristPlaceForm.getRawValue();
+          const payload: TouristPlaceRequest = {
+            name: formValue.name?.trim() ?? '',
+            slug: formValue.slug?.trim() ?? '',
+            tagline: formValue.tagline?.trim() || null,
+            shortDescription: formValue.shortDescription?.trim() || null,
+            description: formValue.description?.trim() || null,
+            cityId: Number(formValue.cityId),
+            categoryIds: [...this.selectedCategoryIds],
+            address: formValue.address?.trim() || null,
+            latitude: formValue.latitude !== null ? Number(formValue.latitude) : null,
+            longitude: formValue.longitude !== null ? Number(formValue.longitude) : null,
+            entryFee: formValue.entryFee !== null ? Number(formValue.entryFee) : null,
+            openingTime: formValue.openingTime || null,
+            closingTime: formValue.closingTime || null,
+            bestTimeToVisit: formValue.bestTimeToVisit?.trim() || null,
+            timeRequired: formValue.timeRequired?.trim() || null,
+            weeklyOf: formValue.weeklyOf?.trim() || null,
+            howToReach: formValue.howToReach?.trim() || null,
+            imageUrl,
+            isFeatured: formValue.isFeatured ?? false,
+            isActive: formValue.isActive ?? true
+          };
 
-    request.subscribe({
+          return isEditing
+            ? this.touristPlaceService.updateTouristPlace(this.editingTouristPlace!.id, payload)
+            : this.touristPlaceService.createTouristPlace(payload);
+        }),
+        finalize(() => {
+          this.saving = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
       next: () => {
-        this.saving = false;
         this.showForm = false;
         this.editingTouristPlace = null;
         this.selectedCategoryIds = [];
+        this.resetImageSelection();
 
         this.successMessage = isEditing
           ? 'Tourist place updated successfully.'
@@ -713,10 +792,9 @@ export class TouristPlaceManagementComponent implements OnInit {
       },
 
       error: (error) => {
-        this.saving = false;
-
         this.errorMessage =
           error.error?.message ||
+          error.message ||
           'Unable to save tourist place. Please try again.';
 
         console.error('Save tourist place failed:', error);

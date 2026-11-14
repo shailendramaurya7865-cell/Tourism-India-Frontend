@@ -414,11 +414,54 @@
           </div>
 
           <div class="form-group full-width">
-            <label>Image URL</label>
-            <input
-              type="text"
-              formControlName="imageUrl"
-              placeholder="Enter image URL">
+            <label>City Image</label>
+
+            <div class="image-upload-section">
+              <div class="image-preview-container">
+                <img
+                  *ngIf="imagePreviewUrl || cityForm.get('imageUrl')?.value"
+                  [src]="imagePreviewUrl || cityForm.get('imageUrl')?.value"
+                  alt="City image preview"
+                  class="upload-preview">
+                <div
+                  *ngIf="!imagePreviewUrl && !cityForm.get('imageUrl')?.value"
+                  class="image-upload-placeholder">
+                  <span class="upload-icon">↑</span>
+                  <span>No image selected</span>
+                </div>
+              </div>
+
+              <div class="image-upload-content">
+                <strong>Upload City Image</strong>
+                <p>Choose an image to represent this city across the Tourism India website.</p>
+
+                <div class="image-upload-actions">
+                  <label for="cityImage" class="upload-label">
+                    <span>↑</span>
+                    {{ selectedImageFile ? 'Change Image' : 'Choose Image' }}
+                  </label>
+                  <input
+                    id="cityImage"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    (change)="onImageSelected($event)"
+                    hidden>
+                  <button
+                    *ngIf="imagePreviewUrl || cityForm.get('imageUrl')?.value"
+                    type="button"
+                    class="btn-remove-image"
+                    [disabled]="saving"
+                    (click)="removeSelectedImage()">
+                    Remove Image
+                  </button>
+                </div>
+
+                <small class="field-hint">Supported formats: PNG, JPG and WEBP. Maximum size: 5 MB.</small>
+                <small class="selected-file-name" *ngIf="selectedImageFile">
+                  Selected: {{ selectedImageFile.name }}
+                </small>
+              </div>
+            </div>
           </div>
 
           <div class="form-group full-width">

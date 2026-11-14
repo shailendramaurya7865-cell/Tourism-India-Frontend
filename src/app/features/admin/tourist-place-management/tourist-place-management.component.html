@@ -874,15 +874,54 @@
             <div class="form-grid">
 
               <div class="form-group full-width">
-                <label>Image URL</label>
+                <label>Tourist Place Image</label>
 
-                <input type="url" formControlName="imageUrl" placeholder="https://example.com/taj-mahal.jpg" />
-              </div>
+                <div class="image-upload-section">
+                  <div class="image-preview-container">
+                    <img
+                      *ngIf="imagePreviewUrl || touristPlaceForm.get('imageUrl')?.value"
+                      [src]="imagePreviewUrl || touristPlaceForm.get('imageUrl')?.value"
+                      alt="Tourist place image preview"
+                      class="upload-preview">
+                    <div
+                      *ngIf="!imagePreviewUrl && !touristPlaceForm.get('imageUrl')?.value"
+                      class="image-upload-placeholder">
+                      <span class="upload-icon">↑</span>
+                      <span>No image selected</span>
+                    </div>
+                  </div>
 
-              <div class="image-preview" *ngIf="touristPlaceForm.get('imageUrl')?.value">
+                  <div class="image-upload-content">
+                    <strong>Upload Tourist Place Image</strong>
+                    <p>Choose an image to represent this destination across the Tourism India website.</p>
 
-                <img [src]="touristPlaceForm.get('imageUrl')?.value" alt="Tourist place preview" />
+                    <div class="image-upload-actions">
+                      <label for="touristPlaceImage" class="upload-label">
+                        <span>↑</span>
+                        {{ selectedImageFile ? 'Change Image' : 'Choose Image' }}
+                      </label>
+                      <input
+                        id="touristPlaceImage"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        (change)="onImageSelected($event)"
+                        hidden>
+                      <button
+                        *ngIf="imagePreviewUrl || touristPlaceForm.get('imageUrl')?.value"
+                        type="button"
+                        class="btn-remove-image"
+                        [disabled]="saving"
+                        (click)="removeSelectedImage()">
+                        Remove Image
+                      </button>
+                    </div>
 
+                    <small class="field-hint">Supported formats: PNG, JPG and WEBP. Maximum size: 5 MB.</small>
+                    <small class="selected-file-name" *ngIf="selectedImageFile">
+                      Selected: {{ selectedImageFile.name }}
+                    </small>
+                  </div>
+                </div>
               </div>
 
             </div>

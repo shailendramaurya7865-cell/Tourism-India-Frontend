@@ -464,15 +464,57 @@
 
             </div>
 
-            <!-- Image URL -->
+            <!-- State Image Upload -->
             <div class="form-group full-width">
 
-              <label>Image URL</label>
+              <label>State Image</label>
 
-              <input
-                type="url"
-                formControlName="imageUrl"
-                placeholder="https://example.com/image.jpg">
+              <div class="image-upload-section">
+                <div class="image-preview-container">
+                  <img
+                    *ngIf="imagePreviewUrl || stateForm.get('imageUrl')?.value"
+                    [src]="imagePreviewUrl || stateForm.get('imageUrl')?.value"
+                    alt="State image preview"
+                    class="upload-preview">
+                  <div
+                    *ngIf="!imagePreviewUrl && !stateForm.get('imageUrl')?.value"
+                    class="image-upload-placeholder">
+                    <span class="upload-icon">↑</span>
+                    <span>No image selected</span>
+                  </div>
+                </div>
+
+                <div class="image-upload-content">
+                  <strong>Upload State Image</strong>
+                  <p>Choose an image to represent this state across the Tourism India website.</p>
+
+                  <div class="image-upload-actions">
+                    <label for="stateImage" class="upload-label">
+                      <span>↑</span>
+                      {{ selectedImageFile ? 'Change Image' : 'Choose Image' }}
+                    </label>
+                    <input
+                      id="stateImage"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      (change)="onImageSelected($event)"
+                      hidden>
+                    <button
+                      *ngIf="imagePreviewUrl || stateForm.get('imageUrl')?.value"
+                      type="button"
+                      class="btn-remove-image"
+                      [disabled]="saving"
+                      (click)="removeSelectedImage()">
+                      Remove Image
+                    </button>
+                  </div>
+
+                  <small class="field-hint">Supported formats: PNG, JPG and WEBP. Maximum size: 5 MB.</small>
+                  <small class="selected-file-name" *ngIf="selectedImageFile">
+                    Selected: {{ selectedImageFile.name }}
+                  </small>
+                </div>
+              </div>
 
             </div>
 

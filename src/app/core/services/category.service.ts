@@ -54,15 +54,23 @@ export class CategoryService {
     // ================= ADMIN APIs =================
 
     // Get lightweight category list
-    getAdminCategories(page: number = 0, size: number = 10): Observable<PageResponse<AdminCategory>> {
-        return this.http
-            .get<ApiResponse<PageResponse<AdminCategory>> | PageResponse<AdminCategory>>(
-                this.adminCategoriesUrl
-            )
-            .pipe(
-                map(response => this.unwrap(response) ?? [])
-            );
-    }
+
+getAdminCategories(page: number = 0, size: number = 10): Observable<PageResponse<AdminCategory>> {
+    return this.http
+        .get<ApiResponse<PageResponse<AdminCategory>> | PageResponse<AdminCategory>>(
+            this.adminCategoriesUrl,
+            {
+                params: {
+                    page: page.toString(),
+                    size: size.toString()
+                }
+            }
+        )
+        .pipe(
+            map(response => this.unwrap(response))
+        );
+}
+
 
     // Get complete category details
     getAdminCategoryById(id: number): Observable<AdminCategoryDetail> {

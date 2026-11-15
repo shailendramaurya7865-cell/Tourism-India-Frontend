@@ -355,6 +355,14 @@
 
       <div class="modal-body">
 
+        <div class="alert alert-error" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <div class="alert alert-success" *ngIf="successMessage">
+          {{ successMessage }}
+        </div>
+
         <div class="form-grid">
 
           <div class="form-group">
@@ -475,6 +483,93 @@
 
         </div>
 
+        <section class="nearby-editor">
+          <h3>Nearby Cities</h3>
+          <p>Search for a city, select it, then enter its distance from this city.</p>
+          <p class="nearby-search-status" *ngIf="nearbyCitiesLoading">Loading nearby cities...</p>
+          <p class="nearby-error" *ngIf="nearbyCitiesError">{{ nearbyCitiesError }}</p>
+
+          <div class="nearby-search" *ngIf="!selectedNearbyCity">
+            <label for="nearbyCitySearch">Search city</label>
+            <input
+              id="nearbyCitySearch"
+              type="search"
+              placeholder="Start typing a city name..."
+              [ngModel]="nearbyCitySearchTerm"
+              (ngModelChange)="onNearbyCitySearchChange($event)"
+              [ngModelOptions]="{ standalone: true }"
+              [disabled]="saving || nearbyActionInProgress">
+
+            <div class="nearby-search-status" *ngIf="nearbyCityOptionsLoading">
+              Searching cities...
+            </div>
+
+            <div
+              class="nearby-search-results"
+              *ngIf="nearbyCitySearchTerm.trim() && !nearbyCityOptionsLoading">
+              <button
+                type="button"
+                *ngFor="let city of filteredNearbyCityOptions"
+                (click)="selectNearbyCity(city)">
+                <span>{{ city.name }}</span>
+                <small>{{ city.stateName || 'Select city' }}</small>
+              </button>
+              <p *ngIf="nearbyCityOptionsLoaded && filteredNearbyCityOptions.length === 0">
+                No matching cities available.
+              </p>
+            </div>
+          </div>
+
+          <div class="nearby-distance-entry" *ngIf="selectedNearbyCity">
+            <strong>{{ selectedNearbyCity.name }}</strong>
+            <label for="nearbyDistance">Distance (km)</label>
+            <input
+              id="nearbyDistance"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="e.g. 240.50"
+              [(ngModel)]="nearbyDistanceKm"
+              [ngModelOptions]="{ standalone: true }"
+              [disabled]="nearbyActionInProgress || saving">
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="addNearbyCity()"
+              [disabled]="!isNearbyCityDistanceValid || nearbyActionInProgress || saving">
+              {{ nearbyActionInProgress ? 'Adding...' : 'Add Nearby City' }}
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="cancelNearbyCitySelection()"
+              [disabled]="nearbyActionInProgress || saving">
+              Cancel
+            </button>
+          </div>
+
+          <div class="nearby-city-list" *ngIf="nearbyCities.length > 0">
+            <div class="nearby-city-row" *ngFor="let nearbyCity of nearbyCities">
+              <div>
+                <strong>{{ nearbyCity.name }}</strong>
+                <small>{{ nearbyCity.distanceKm | number:'1.0-2' }} km</small>
+                <small class="nearby-pending" *ngIf="nearbyCity.pending">Will be added when city is saved</small>
+              </div>
+              <button
+                type="button"
+                class="btn-remove-image"
+                (click)="removeNearbyCity(nearbyCity)"
+                [disabled]="nearbyActionInProgress || saving">
+                {{ nearbyActionInProgress ? 'Please wait...' : 'Remove' }}
+              </button>
+            </div>
+          </div>
+
+          <p class="nearby-empty" *ngIf="nearbyCities.length === 0">
+            No nearby cities added.
+          </p>
+        </section>
+
         <!-- Publishing Settings -->
         <div class="settings-section">
 
@@ -523,7 +618,7 @@
         <button
           type="submit"
           class="btn-primary"
-          [disabled]="cityForm.invalid || isSaving">
+          [disabled]="cityForm.invalid || isSaving || nearbyActionInProgress">
 
           {{ isSaving
             ? 'Saving...'
@@ -641,6 +736,21 @@
 
         <p class="detail-description">
           {{ selectedCity.description || 'No description available.' }}
+        </p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Nearby Cities</h3>
+        <p class="nearby-search-status" *ngIf="nearbyCitiesLoading">Loading nearby cities...</p>
+        <p class="nearby-error" *ngIf="nearbyCitiesError">{{ nearbyCitiesError }}</p>
+        <div class="nearby-city-list" *ngIf="nearbyCities.length > 0">
+          <div class="nearby-city-row" *ngFor="let nearbyCity of nearbyCities">
+            <strong>{{ nearbyCity.name }}</strong>
+            <span>{{ nearbyCity.distanceKm | number:'1.0-2' }} km</span>
+          </div>
+        </div>
+        <p class="detail-description" *ngIf="nearbyCities.length === 0">
+          No nearby cities added.
         </p>
       </div>
 

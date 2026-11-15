@@ -183,4 +183,26 @@ export class CityService {
       `${this.adminCitiesUrl}/${id}`
     );
   }
+
+  // Add a nearby-city relationship
+  addNearbyCity(
+    cityId: number,
+    nearbyCityId: number,
+    distanceKm: number
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.adminCitiesUrl}/${cityId}/nearby-cities`,
+      { nearbyCityId, distanceKm }
+    );
+  }
+
+  // Remove a nearby-city relationship
+  removeNearbyCity(
+    cityId: number,
+    nearbyCityId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.adminCitiesUrl}/${cityId}/nearby-cities/${nearbyCityId}`
+    );
+  }
 }

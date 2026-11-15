@@ -20,6 +20,13 @@ export interface AdminCityDetail extends AdminCity {
   config: Record<string, unknown>;
 }
 
+export interface AdminNearbyCity {
+  id: number;
+  name: string;
+  distanceKm: number;
+  pending?: boolean;
+}
+
 export interface CityStats {
   totalCities: number;
   activeCities: number;

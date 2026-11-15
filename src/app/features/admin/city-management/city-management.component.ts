@@ -15,18 +15,31 @@ import {
   FormBuilder,
   Validators
 } from '@angular/forms';
-import { Observable, finalize, map, of, switchMap } from 'rxjs';
+import {
+  Observable,
+  concatMap,
+  finalize,
+  from,
+  map,
+  of,
+  switchMap,
+  tap,
+  toArray
+} from 'rxjs';
 
 import { StateService } from '../../../core/services/state.services';
 import { CityService } from '../../../core/services/city.services';
+import { CityDetailService } from '../../../core/services/city-detail.service';
 import { MediaService } from '../../../core/services/media.service';
 import { MediaFolder } from '../../../shared/models/media-folder.model';
+import { City } from '../../../core/models/city.model';
 
 import { AdminState } from '../../../features/admin/models/admin-state.model';
 
 import {
   AdminCity,
   AdminCityDetail,
+  AdminNearbyCity,
   CityStats,
   CityRequest
 } from '../../../features/admin/models/admin-city.model';
@@ -45,6 +58,7 @@ import {
 export class CityManagementComponent implements OnInit, OnDestroy {
 
   private readonly cityService = inject(CityService);
+  private readonly cityDetailService = inject(CityDetailService);
   private readonly stateService = inject(StateService);
   private readonly mediaService = inject(MediaService);
   private readonly fb = inject(FormBuilder);
@@ -126,6 +140,17 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
   editingCity: AdminCityDetail | null = null;
   viewingCity: AdminCityDetail | null = null;
+  nearbyCities: AdminNearbyCity[] = [];
+  nearbyCityOptions: City[] = [];
+  nearbyCitySearchTerm = '';
+  selectedNearbyCity: City | null = null;
+  nearbyDistanceKm: number | null = null;
+  nearbyCityOptionsLoading = false;
+  nearbyCityOptionsLoaded = false;
+  nearbyCitiesLoading = false;
+  nearbyCitiesError = '';
+  nearbyActionInProgress = false;
+  private nearbyCitiesRequestId = 0;
 
   // HTML-compatible aliases
 
@@ -182,6 +207,200 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearImagePreview();
+  }
+
+  get filteredNearbyCityOptions(): City[] {
+    const term = this.nearbyCitySearchTerm.trim().toLowerCase();
+    if (!term) return [];
+
+    const currentCityName = this.cityForm.controls.name.value?.trim().toLowerCase();
+    const excludedIds = new Set(this.nearbyCities.map(city => city.id));
+    if (this.editingCity) excludedIds.add(this.editingCity.id);
+
+    return this.nearbyCityOptions
+      .filter(city =>
+        !excludedIds.has(city.id) &&
+        city.name.toLowerCase() !== currentCityName &&
+        city.name.toLowerCase().includes(term)
+      )
+      .slice(0, 8);
+  }
+
+  get isNearbyCityDistanceValid(): boolean {
+    return this.nearbyDistanceKm !== null &&
+      Number.isFinite(this.nearbyDistanceKm) &&
+      this.nearbyDistanceKm > 0;
+  }
+
+  private loadNearbyCities(cityId: number): void {
+    const requestId = ++this.nearbyCitiesRequestId;
+    this.nearbyCities = [];
+    this.nearbyCitiesError = '';
+    this.nearbyCitiesLoading = true;
+
+    this.cityDetailService.getCityDetail(cityId).subscribe({
+      next: response => {
+        if (requestId !== this.nearbyCitiesRequestId) return;
+
+        if (!response.success || !response.data) {
+          this.nearbyCitiesError = response.message || 'Unable to load nearby cities.';
+        } else {
+          this.nearbyCities = (response.data.nearByCities ?? []).map(city => ({
+            id: city.id,
+            name: city.name,
+            distanceKm: city.distanceFromSource
+          }));
+        }
+
+        this.nearbyCitiesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        if (requestId !== this.nearbyCitiesRequestId) return;
+
+        this.nearbyCitiesLoading = false;
+        this.nearbyCitiesError = error.error?.message || 'Unable to load nearby cities.';
+        console.error('Load nearby cities failed:', error);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private clearNearbyCities(): void {
+    this.nearbyCitiesRequestId++;
+    this.nearbyCities = [];
+    this.nearbyCitiesLoading = false;
+    this.nearbyCitiesError = '';
+  }
+
+  onNearbyCitySearchChange(term: string): void {
+    this.nearbyCitySearchTerm = term;
+    this.selectedNearbyCity = null;
+    this.nearbyDistanceKm = null;
+
+    if (!term.trim() || this.nearbyCityOptionsLoaded || this.nearbyCityOptionsLoading) {
+      return;
+    }
+
+    this.nearbyCityOptionsLoading = true;
+    this.cityService.getCities().subscribe({
+      next: cities => {
+        this.nearbyCityOptions = cities ?? [];
+        this.nearbyCityOptionsLoaded = true;
+        this.nearbyCityOptionsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        this.nearbyCityOptionsLoading = false;
+        this.errorMessage = error.error?.message || 'Unable to search cities for nearby destinations.';
+        console.error('Load nearby city options failed:', error);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  selectNearbyCity(city: City): void {
+    this.selectedNearbyCity = city;
+    this.nearbyDistanceKm = null;
+    this.nearbyCitySearchTerm = '';
+  }
+
+  cancelNearbyCitySelection(): void {
+    this.selectedNearbyCity = null;
+    this.nearbyDistanceKm = null;
+    this.nearbyCitySearchTerm = '';
+  }
+
+  addNearbyCity(): void {
+    const city = this.selectedNearbyCity;
+    const distanceKm = Number(this.nearbyDistanceKm);
+
+    if (
+      !city ||
+      !Number.isFinite(distanceKm) ||
+      distanceKm <= 0 ||
+      this.nearbyCities.some(nearby => nearby.id === city.id) ||
+      this.nearbyActionInProgress ||
+      this.saving
+    ) {
+      return;
+    }
+
+    if (!this.editingCity) {
+      this.nearbyCities = [...this.nearbyCities, {
+        id: city.id,
+        name: city.name,
+        distanceKm,
+        pending: true
+      }];
+      this.cancelNearbyCitySelection();
+      return;
+    }
+
+    this.nearbyActionInProgress = true;
+    this.clearMessages();
+    this.cityService.addNearbyCity(this.editingCity.id, city.id, distanceKm)
+      .pipe(finalize(() => {
+        this.nearbyActionInProgress = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: () => {
+          this.nearbyCities = [...this.nearbyCities, {
+            id: city.id,
+            name: city.name,
+            distanceKm
+          }];
+          this.cancelNearbyCitySelection();
+          this.successMessage = `${city.name} added as a nearby city.`;
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Unable to add nearby city.';
+          console.error('Add nearby city failed:', error);
+        }
+      });
+  }
+
+  removeNearbyCity(city: AdminNearbyCity): void {
+    if (this.nearbyActionInProgress || this.saving) return;
+
+    if (city.pending || !this.editingCity) {
+      this.nearbyCities = this.nearbyCities.filter(item => item.id !== city.id);
+      return;
+    }
+
+    this.nearbyActionInProgress = true;
+    this.clearMessages();
+    this.cityService.removeNearbyCity(this.editingCity.id, city.id)
+      .pipe(finalize(() => {
+        this.nearbyActionInProgress = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: () => {
+          this.nearbyCities = this.nearbyCities.filter(item => item.id !== city.id);
+          this.successMessage = `${city.name} removed from nearby cities.`;
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Unable to remove nearby city.';
+          console.error('Remove nearby city failed:', error);
+        }
+      });
+  }
+
+  private persistPendingNearbyCities(cityId: number): Observable<unknown[]> {
+    return from(this.nearbyCities.filter(city => city.pending)).pipe(
+      concatMap(city =>
+        this.cityService.addNearbyCity(cityId, city.id, city.distanceKm).pipe(
+          tap(() => {
+            this.nearbyCities = this.nearbyCities.map(item =>
+              item.id === city.id ? { ...item, pending: false } : item
+            );
+          })
+        )
+      ),
+      toArray()
+    );
   }
 
   onImageSelected(event: Event): void {
@@ -434,12 +653,14 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
   openAddForm(): void {
 
-    if (this.saving || this.detailLoading) {
+    if (this.saving || this.detailLoading || this.nearbyActionInProgress) {
       return;
     }
 
     this.editingCity = null;
     this.resetImageSelection();
+    this.clearNearbyCities();
+    this.cancelNearbyCitySelection();
 
     this.cityForm.reset({
 
@@ -469,6 +690,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
     if (
       this.detailLoading ||
       this.saving ||
+      this.nearbyActionInProgress ||
       this.viewLoading
     ) {
       return;
@@ -480,9 +702,9 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
     this.showForm = false;
     this.viewingCity = null;
-
     this.editingCity = null;
     this.resetImageSelection();
+    this.clearNearbyCities();
 
     this.cityForm.reset();
 
@@ -520,6 +742,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
           this.detailLoading = false;
 
           this.showForm = true;
+          this.loadNearbyCities(details.id);
 
           this.cdr.detectChanges();
         },
@@ -556,6 +779,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
     if (
       this.viewLoading ||
       this.detailLoading ||
+      this.nearbyActionInProgress ||
       this.saving
     ) {
       return;
@@ -564,6 +788,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
     this.clearMessages();
 
     this.viewingCity = null;
+    this.clearNearbyCities();
 
     this.viewLoading = true;
 
@@ -576,6 +801,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
           this.viewingCity = details;
 
           this.viewLoading = false;
+          this.loadNearbyCities(details.id);
 
           this.cdr.detectChanges();
         },
@@ -603,6 +829,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
   closeViewDetails(): void {
 
     this.viewingCity = null;
+    this.clearNearbyCities();
 
     this.viewLoading = false;
 
@@ -630,7 +857,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
   closeForm(): void {
 
-    if (this.saving || this.detailLoading) {
+    if (this.saving || this.detailLoading || this.nearbyActionInProgress) {
       return;
     }
 
@@ -638,6 +865,8 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
     this.editingCity = null;
     this.resetImageSelection();
+    this.clearNearbyCities();
+    this.cancelNearbyCitySelection();
 
     this.cityForm.reset();
 
@@ -648,7 +877,7 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
   saveCity(): void {
 
-    if (this.cityForm.invalid || this.saving) {
+    if (this.cityForm.invalid || this.saving || this.nearbyActionInProgress) {
 
       this.cityForm.markAllAsTouched();
 
@@ -682,6 +911,12 @@ export class CityManagementComponent implements OnInit, OnDestroy {
             ? this.cityService.updateCity(this.editingCity!.id, payload)
             : this.cityService.createCity(payload);
         }),
+        switchMap(savedCity => {
+          this.editingCity = savedCity;
+          return this.persistPendingNearbyCities(savedCity.id).pipe(
+            map(() => savedCity)
+          );
+        }),
         finalize(() => {
           this.saving = false;
           this.cdr.detectChanges();
@@ -695,6 +930,8 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
         this.editingCity = null;
         this.resetImageSelection();
+        this.clearNearbyCities();
+        this.cancelNearbyCitySelection();
 
         this.successMessage = isEditing
           ? 'City updated successfully.'
@@ -715,7 +952,9 @@ export class CityManagementComponent implements OnInit, OnDestroy {
 
         this.errorMessage =
           error.error?.message ||
-          error.message ||
+          (this.editingCity && this.nearbyCities.some(city => city.pending)
+            ? 'City saved, but some nearby cities could not be added. Save again to retry.'
+            : error.message) ||
           'Unable to save city. Please try again.';
 
         console.error('Save city failed:', error);

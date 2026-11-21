@@ -187,7 +187,7 @@ getAdminTouristPlaces(
     nearbyPlaceId: number
   ): Observable<void> {
     return this.http.delete<void>(
-      `${this.adminTouristPlacesUrl}/${placeId}/nearby-plces/${nearbyPlaceId}`
+      `${this.adminTouristPlacesUrl}/${placeId}/nearby-places/${nearbyPlaceId}`
     );
   }
 }

@@ -15,9 +15,20 @@ import {
   FormBuilder,
   Validators
 } from '@angular/forms';
-import { Observable, finalize, map, of, switchMap } from 'rxjs';
+import {
+  Observable,
+  concatMap,
+  finalize,
+  from,
+  map,
+  of,
+  switchMap,
+  tap,
+  toArray
+} from 'rxjs';
 
 import { TouristPlaceService } from '../../../core/services/tourist-place.service';
+import { TouristPlaceDetailService } from '../../../core/services/tourist-place-detail.service';
 import { StateService } from '../../../core/services/state.services';
 import { CityService } from '../../../core/services/city.services';
 import { CategoryService } from '../../../core/services/category.service';
@@ -27,10 +38,13 @@ import { MediaFolder } from '../../../shared/models/media-folder.model';
 import { AdminState } from '../../../features/admin/models/admin-state.model';
 import { AdminCity } from '../../../features/admin/models/admin-city.model';
 import { AdminCategory } from '../../../features/admin/models/admin-category.model';
+import { TouristPlace } from '../../../core/models/tourist-place.model';
+import { TouristPlaceDetail, NearbyPlace } from '../../../core/models/tourist-place-detail.model';
 
 import {
   AdminTouristPlace,
   AdminTouristPlaceDetail,
+  AdminNearbyPlace,
   TouristPlaceStats,
   TouristPlaceRequest
 } from '../../../features/admin/models/admin-tourist-place.model';
@@ -49,6 +63,7 @@ import {
 export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
 
   private readonly touristPlaceService = inject(TouristPlaceService);
+  private readonly touristPlaceDetailService = inject(TouristPlaceDetailService);
   private readonly stateService = inject(StateService);
   private readonly cityService = inject(CityService);
   private readonly categoryService = inject(CategoryService);
@@ -124,6 +139,17 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
   editingTouristPlace: AdminTouristPlaceDetail | null = null;
 
   viewingTouristPlace: AdminTouristPlaceDetail | null = null;
+  nearbyPlaces: AdminNearbyPlace[] = [];
+  nearbyPlaceOptions: TouristPlace[] = [];
+  nearbyPlaceSearchTerm = '';
+  selectedNearbyPlace: TouristPlace | null = null;
+  nearbyDistanceKm: number | null = null;
+  nearbyPlaceOptionsLoading = false;
+  nearbyPlaceOptionsLoaded = false;
+  nearbyPlacesLoading = false;
+  nearbyPlacesError = '';
+  nearbyActionInProgress = false;
+  private nearbyPlacesRequestId = 0;
 
   // ================= FORM =================
 
@@ -183,6 +209,211 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearImagePreview();
+  }
+
+  get filteredNearbyPlaceOptions(): TouristPlace[] {
+    const term = this.nearbyPlaceSearchTerm.trim().toLowerCase();
+    if (!term) return [];
+
+    const excludedIds = new Set(this.nearbyPlaces.map(place => place.id));
+    if (this.editingTouristPlace) excludedIds.add(this.editingTouristPlace.id);
+
+    return this.nearbyPlaceOptions
+      .filter(place =>
+        !excludedIds.has(place.id) &&
+        place.title.toLowerCase().includes(term)
+      )
+      .slice(0, 8);
+  }
+
+  get isNearbyPlaceDistanceValid(): boolean {
+    return this.nearbyDistanceKm !== null &&
+      Number.isFinite(this.nearbyDistanceKm) &&
+      this.nearbyDistanceKm > 0;
+  }
+
+  private loadNearbyPlaces(placeId: number): void {
+    const requestId = ++this.nearbyPlacesRequestId;
+    this.nearbyPlaces = [];
+    this.nearbyPlacesError = '';
+    this.nearbyPlacesLoading = true;
+
+    this.touristPlaceDetailService.getTouristPlaceDetail(placeId).subscribe({
+      next: response => {
+        if (requestId !== this.nearbyPlacesRequestId) return;
+
+        const detail = response.data as (TouristPlaceDetail & {
+          nearbyPlaces?: NearbyPlace[];
+        }) | undefined;
+
+        if (!response.success || !detail) {
+          this.nearbyPlacesError = response.message || 'Unable to load nearby tourist places.';
+        } else {
+          const nearbyPlaces = detail.nearByPlace ?? detail.nearbyPlaces ?? [];
+          this.nearbyPlaces = nearbyPlaces.map(place => ({
+            id: place.id,
+            placeName: place.name,
+            distanceKm: place.distanceKm
+          }));
+        }
+
+        this.nearbyPlacesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        if (requestId !== this.nearbyPlacesRequestId) return;
+
+        this.nearbyPlacesLoading = false;
+        this.nearbyPlacesError = error.error?.message || 'Unable to load nearby tourist places.';
+        console.error('Load nearby tourist places failed:', error);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private clearNearbyPlaces(): void {
+    this.nearbyPlacesRequestId++;
+    this.nearbyPlaces = [];
+    this.nearbyPlacesLoading = false;
+    this.nearbyPlacesError = '';
+  }
+
+  onNearbyPlaceSearchChange(term: string): void {
+    this.nearbyPlaceSearchTerm = term;
+    this.selectedNearbyPlace = null;
+    this.nearbyDistanceKm = null;
+
+    if (!term.trim() || this.nearbyPlaceOptionsLoaded || this.nearbyPlaceOptionsLoading) {
+      return;
+    }
+
+    this.nearbyPlaceOptionsLoading = true;
+    this.touristPlaceService.getTouristPlaces().subscribe({
+      next: places => {
+        this.nearbyPlaceOptions = places ?? [];
+        this.nearbyPlaceOptionsLoaded = true;
+        this.nearbyPlaceOptionsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        this.nearbyPlaceOptionsLoading = false;
+        this.errorMessage = error.error?.message || 'Unable to search tourist places.';
+        console.error('Load nearby tourist-place options failed:', error);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  selectNearbyPlace(place: TouristPlace): void {
+    this.selectedNearbyPlace = place;
+    this.nearbyDistanceKm = null;
+    this.nearbyPlaceSearchTerm = '';
+  }
+
+  cancelNearbyPlaceSelection(): void {
+    this.selectedNearbyPlace = null;
+    this.nearbyDistanceKm = null;
+    this.nearbyPlaceSearchTerm = '';
+  }
+
+  addNearbyPlace(): void {
+    const place = this.selectedNearbyPlace;
+    const distanceKm = Number(this.nearbyDistanceKm);
+
+    if (
+      !place ||
+      !Number.isFinite(distanceKm) ||
+      distanceKm <= 0 ||
+      this.nearbyPlaces.some(nearby => nearby.id === place.id) ||
+      this.nearbyActionInProgress ||
+      this.nearbyPlacesLoading ||
+      this.saving
+    ) {
+      return;
+    }
+
+    if (!this.editingTouristPlace) {
+      this.nearbyPlaces = [...this.nearbyPlaces, {
+        id: place.id,
+        placeName: place.title,
+        distanceKm,
+        pending: true
+      }];
+      this.cancelNearbyPlaceSelection();
+      return;
+    }
+
+    this.nearbyActionInProgress = true;
+    this.clearMessages();
+    this.touristPlaceService
+      .addNearbyPlace(this.editingTouristPlace.id, place.id, distanceKm)
+      .pipe(finalize(() => {
+        this.nearbyActionInProgress = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: () => {
+          this.nearbyPlaces = [...this.nearbyPlaces, {
+            id: place.id,
+            placeName: place.title,
+            distanceKm
+          }];
+          this.cancelNearbyPlaceSelection();
+          this.successMessage = `${place.title} added as a nearby tourist place.`;
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Unable to add nearby tourist place.';
+          console.error('Add nearby tourist place failed:', error);
+        }
+      });
+  }
+
+  removeNearbyPlace(place: AdminNearbyPlace): void {
+    if (this.nearbyActionInProgress || this.nearbyPlacesLoading || this.saving) return;
+
+    if (place.pending || !this.editingTouristPlace) {
+      this.nearbyPlaces = this.nearbyPlaces.filter(item => item.id !== place.id);
+      return;
+    }
+
+    this.nearbyActionInProgress = true;
+    this.clearMessages();
+    this.touristPlaceService
+      .removeNearbyPlace(this.editingTouristPlace.id, place.id)
+      .pipe(finalize(() => {
+        this.nearbyActionInProgress = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: () => {
+          this.nearbyPlaces = this.nearbyPlaces.filter(item => item.id !== place.id);
+          this.successMessage = `${place.placeName} removed from nearby tourist places.`;
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Unable to remove nearby tourist place.';
+          console.error('Remove nearby tourist place failed:', error);
+        }
+      });
+  }
+
+  private persistPendingNearbyPlaces(placeId: number): Observable<unknown[]> {
+    const pendingPlaces = this.nearbyPlaces.filter(
+      (place): place is AdminNearbyPlace & { distanceKm: number } =>
+        place.pending === true && place.distanceKm !== null
+    );
+
+    return from(pendingPlaces).pipe(
+      concatMap(place =>
+        this.touristPlaceService.addNearbyPlace(placeId, place.id, place.distanceKm).pipe(
+          tap(() => {
+            this.nearbyPlaces = this.nearbyPlaces.map(item =>
+              item.id === place.id ? { ...item, pending: false } : item
+            );
+          })
+        )
+      ),
+      toArray()
+    );
   }
 
   onImageSelected(event: Event): void {
@@ -405,7 +636,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
   // ================= ADD TOURIST PLACE =================
 
   openAddForm(): void {
-    if (this.saving || this.detailLoading) {
+    if (this.saving || this.detailLoading || this.nearbyActionInProgress) {
       return;
     }
 
@@ -413,6 +644,8 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
     this.selectedCategoryIds = [];
     this.cities = [];
     this.resetImageSelection();
+    this.clearNearbyPlaces();
+    this.cancelNearbyPlaceSelection();
 
     this.touristPlaceForm.reset({
       name: '',
@@ -514,6 +747,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
     if (
       this.detailLoading ||
       this.saving ||
+      this.nearbyActionInProgress ||
       this.viewLoading
     ) {
       return;
@@ -525,6 +759,8 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
     this.showForm = false;
     this.editingTouristPlace = null;
     this.resetImageSelection();
+    this.clearNearbyPlaces();
+    this.cancelNearbyPlaceSelection();
 
     this.touristPlaceForm.reset();
     this.selectedCategoryIds = [];
@@ -536,6 +772,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
         next: (details) => {
           this.editingTouristPlace = details;
           this.imagePreviewUrl = details.imageUrl ?? null;
+          this.loadNearbyPlaces(details.id);
 
           const state = this.states.find(
             item => item.name === details.stateName
@@ -640,6 +877,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
     if (
       this.viewLoading ||
       this.detailLoading ||
+      this.nearbyActionInProgress ||
       this.saving
     ) {
       return;
@@ -648,6 +886,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
     this.clearMessages();
 
     this.viewingTouristPlace = null;
+    this.clearNearbyPlaces();
     this.viewLoading = true;
 
     this.touristPlaceService
@@ -657,6 +896,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
           this.viewingTouristPlace = details;
 
           this.viewLoading = false;
+          this.loadNearbyPlaces(details.id);
 
           this.cdr.detectChanges();
         },
@@ -680,6 +920,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
 
   closeViewDetails(): void {
     this.viewingTouristPlace = null;
+    this.clearNearbyPlaces();
 
     this.cdr.detectChanges();
   }
@@ -699,7 +940,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
   // ================= CLOSE FORM =================
 
   closeForm(): void {
-    if (this.saving || this.detailLoading) {
+    if (this.saving || this.detailLoading || this.nearbyActionInProgress) {
       return;
     }
 
@@ -708,6 +949,8 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
     this.selectedCategoryIds = [];
     this.cities = [];
     this.resetImageSelection();
+    this.clearNearbyPlaces();
+    this.cancelNearbyPlaceSelection();
 
     this.touristPlaceForm.reset();
 
@@ -717,7 +960,7 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
   // ================= SAVE TOURIST PLACE =================
 
   saveTouristPlace(): void {
-    if (this.touristPlaceForm.invalid || this.saving) {
+    if (this.touristPlaceForm.invalid || this.saving || this.nearbyActionInProgress) {
       this.touristPlaceForm.markAllAsTouched();
       return;
     }
@@ -763,6 +1006,12 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
             ? this.touristPlaceService.updateTouristPlace(this.editingTouristPlace!.id, payload)
             : this.touristPlaceService.createTouristPlace(payload);
         }),
+        switchMap(savedPlace => {
+          this.editingTouristPlace = savedPlace;
+          return this.persistPendingNearbyPlaces(savedPlace.id).pipe(
+            map(() => savedPlace)
+          );
+        }),
         finalize(() => {
           this.saving = false;
           this.cdr.detectChanges();
@@ -774,6 +1023,8 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
         this.editingTouristPlace = null;
         this.selectedCategoryIds = [];
         this.resetImageSelection();
+        this.clearNearbyPlaces();
+        this.cancelNearbyPlaceSelection();
 
         this.successMessage = isEditing
           ? 'Tourist place updated successfully.'
@@ -794,7 +1045,9 @@ export class TouristPlaceManagementComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.errorMessage =
           error.error?.message ||
-          error.message ||
+          (this.editingTouristPlace && this.nearbyPlaces.some(place => place.pending)
+            ? 'Tourist place saved, but some nearby places could not be added. Save again to retry.'
+            : error.message) ||
           'Unable to save tourist place. Please try again.';
 
         console.error('Save tourist place failed:', error);

@@ -168,4 +168,26 @@ getAdminTouristPlaces(
       `${this.adminTouristPlacesUrl}/${id}`
     );
   }
+
+  // Add a nearby tourist-place relationship
+  addNearbyPlace(
+    placeId: number,
+    nearbyPlaceId: number,
+    distanceKm: number
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.adminTouristPlacesUrl}/${placeId}/nearby-places`,
+      { nearbyPlaceId, distanceKm }
+    );
+  }
+
+  // Remove a nearby tourist-place relationship
+  removeNearbyPlace(
+    placeId: number,
+    nearbyPlaceId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.adminTouristPlacesUrl}/${placeId}/nearby-plces/${nearbyPlaceId}`
+    );
+  }
 }

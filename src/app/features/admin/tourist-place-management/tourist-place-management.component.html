@@ -12,7 +12,7 @@
       </p>
     </div>
 
-    <button type="button" class="btn-primary" (click)="openAddForm()" [disabled]="detailLoading || saving">
+    <button type="button" class="btn-primary" (click)="openAddForm()" [disabled]="detailLoading || saving || nearbyActionInProgress">
       <span class="plus-icon">+</span>
       Add New Tourist Place
     </button>
@@ -527,6 +527,25 @@
 
       </div>
 
+      <div class="form-section">
+        <h3>Nearby Tourist Places</h3>
+        <p class="nearby-search-status" *ngIf="nearbyPlacesLoading">Loading nearby tourist places...</p>
+        <p class="nearby-error" *ngIf="nearbyPlacesError">{{ nearbyPlacesError }}</p>
+        <div class="nearby-city-list" *ngIf="nearbyPlaces.length > 0">
+          <div class="nearby-city-row" *ngFor="let nearbyPlace of nearbyPlaces">
+            <strong>{{ nearbyPlace.placeName }}</strong>
+            <span>
+              {{ nearbyPlace.distanceKm != null
+                ? (nearbyPlace.distanceKm | number:'1.0-2') + ' km'
+                : 'Distance unavailable' }}
+            </span>
+          </div>
+        </div>
+        <p class="nearby-empty" *ngIf="nearbyPlaces.length === 0 && !nearbyPlacesLoading && !nearbyPlacesError">
+          No nearby tourist places added.
+        </p>
+      </div>
+
       <!-- Publishing Settings -->
       <div class="form-section">
 
@@ -659,6 +678,14 @@
       <form [formGroup]="touristPlaceForm" (ngSubmit)="saveTouristPlace()">
 
         <div class="modal-body">
+
+          <div class="alert alert-error" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+          <div class="alert alert-success" *ngIf="successMessage">
+            {{ successMessage }}
+          </div>
 
           <!-- BASIC INFORMATION -->
           <div class="form-section">
@@ -809,6 +836,101 @@
               Please select at least one category.
             </small>
 
+          </div>
+
+          <!-- NEARBY TOURIST PLACES -->
+          <div class="form-section nearby-editor">
+            <h3>Nearby Tourist Places</h3>
+            <p class="section-description">
+              Search for a tourist place, select it, then enter its distance from this destination.
+            </p>
+
+            <p class="nearby-search-status" *ngIf="nearbyPlacesLoading">Loading nearby tourist places...</p>
+            <p class="nearby-error" *ngIf="nearbyPlacesError">{{ nearbyPlacesError }}</p>
+
+            <div class="nearby-search" *ngIf="!selectedNearbyPlace">
+              <label for="nearbyPlaceSearch">Search tourist place</label>
+              <input
+                id="nearbyPlaceSearch"
+                type="search"
+                placeholder="Start typing a tourist place name..."
+                [ngModel]="nearbyPlaceSearchTerm"
+                (ngModelChange)="onNearbyPlaceSearchChange($event)"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="saving || nearbyActionInProgress || nearbyPlacesLoading">
+
+              <div class="nearby-search-status" *ngIf="nearbyPlaceOptionsLoading">
+                Searching tourist places...
+              </div>
+
+              <div
+                class="nearby-search-results"
+                *ngIf="nearbyPlaceSearchTerm.trim() && !nearbyPlaceOptionsLoading">
+                <button
+                  type="button"
+                  *ngFor="let place of filteredNearbyPlaceOptions"
+                  (click)="selectNearbyPlace(place)">
+                  <span>{{ place.title }}</span>
+                  <small>{{ place.cityName || place.stateName || 'Tourist place' }}</small>
+                </button>
+                <p *ngIf="nearbyPlaceOptionsLoaded && filteredNearbyPlaceOptions.length === 0">
+                  No matching tourist places available.
+                </p>
+              </div>
+            </div>
+
+            <div class="nearby-distance-entry" *ngIf="selectedNearbyPlace">
+              <strong>{{ selectedNearbyPlace.title }}</strong>
+              <label for="nearbyPlaceDistance">Distance (km)</label>
+              <input
+                id="nearbyPlaceDistance"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="e.g. 240.50"
+                [(ngModel)]="nearbyDistanceKm"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="nearbyActionInProgress || nearbyPlacesLoading || saving">
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="addNearbyPlace()"
+                [disabled]="!isNearbyPlaceDistanceValid || nearbyActionInProgress || nearbyPlacesLoading || saving">
+                {{ nearbyActionInProgress ? 'Adding...' : 'Add Nearby Place' }}
+              </button>
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="cancelNearbyPlaceSelection()"
+                [disabled]="nearbyActionInProgress || nearbyPlacesLoading || saving">
+                Cancel
+              </button>
+            </div>
+
+            <div class="nearby-city-list" *ngIf="nearbyPlaces.length > 0">
+              <div class="nearby-city-row" *ngFor="let nearbyPlace of nearbyPlaces">
+                <div>
+                  <strong>{{ nearbyPlace.placeName }}</strong>
+                  <small>
+                    {{ nearbyPlace.distanceKm != null
+                      ? (nearbyPlace.distanceKm | number:'1.0-2') + ' km'
+                      : 'Distance unavailable' }}
+                  </small>
+                  <small class="nearby-pending" *ngIf="nearbyPlace.pending">Will be added when place is saved</small>
+                </div>
+                <button
+                  type="button"
+                  class="btn-remove-image"
+                  (click)="removeNearbyPlace(nearbyPlace)"
+                  [disabled]="nearbyActionInProgress || nearbyPlacesLoading || saving">
+                  {{ nearbyActionInProgress ? 'Please wait...' : 'Remove' }}
+                </button>
+              </div>
+            </div>
+
+            <p class="nearby-empty" *ngIf="nearbyPlaces.length === 0 && !nearbyPlacesLoading && !nearbyPlacesError">
+              No nearby tourist places added.
+            </p>
           </div>
 
           <!-- VISITOR INFORMATION -->
@@ -975,11 +1097,11 @@
         <!-- MODAL FOOTER -->
         <div class="modal-footer">
 
-          <button type="button" class="btn-secondary" [disabled]="saving" (click)="closeForm()">
+          <button type="button" class="btn-secondary" [disabled]="saving || nearbyActionInProgress" (click)="closeForm()">
             Cancel
           </button>
 
-          <button type="submit" class="btn-primary" [disabled]="saving || citiesLoading">
+          <button type="submit" class="btn-primary" [disabled]="saving || citiesLoading || nearbyActionInProgress">
 
             {{ saving
             ? 'Saving...'

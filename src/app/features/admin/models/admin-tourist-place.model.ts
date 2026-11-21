@@ -32,6 +32,13 @@ export interface AdminTouristPlaceDetail extends AdminTouristPlace {
   categoryIds: number[];
 }
 
+export interface AdminNearbyPlace {
+  id: number;
+  placeName: string;
+  distanceKm: number | null;
+  pending?: boolean;
+}
+
 export interface TouristPlaceStats {
   totalTouristPlaces: number;
   activeTouristPlaces: number;
